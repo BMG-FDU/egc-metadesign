@@ -1,0 +1,32 @@
+{
+  "data_sources": [
+    {
+      "file": "nearest_neighbor_885.csv",
+      "source": "D:\\WORK\\20261023\\R2_M3_\u8bad\u7ec3\u96c6\u6700\u8fd1\u90bb\u76f8\u4f3c\u5ea6\\outputs\\nearest_neighbor_885.csv",
+      "sha256": "14a91ee6ceab3f3d9f1003ea6c7e63d0dabde3d87e45d42900db2ccdd245598c"
+    },
+    {
+      "file": "three_equal_count_groups.csv",
+      "source": "D:\\WORK\\20261023\\R2_M3_\u8bad\u7ec3\u96c6\u6700\u8fd1\u90bb\u76f8\u4f3c\u5ea6\\outputs\\three_equal_count_groups.csv",
+      "sha256": "892b338b98227215e8dfac68a4e8d1762138ab6fa655e2e0dffa096478cebc45"
+    },
+    {
+      "file": "tolerance_sensitivity_summary.csv",
+      "source": "D:\\WORK\\20261023\\R2_M3_\u8bad\u7ec3\u96c6\u6700\u8fd1\u90bb\u76f8\u4f3c\u5ea6\\outputs\\tolerance_sensitivity_summary.csv",
+      "sha256": "0a6eaf189f71715d79ddd3f3aec4f6f0292a0bf7f47b3f6e556be7b60559ece1"
+    },
+    {
+      "file": "panel_a_histogram_data.csv",
+      "source": "D:\\WORK\\20261023\\R2_M3_\u8bad\u7ec3\u96c6\u6700\u8fd1\u90bb\u76f8\u4f3c\u5ea6\\outputs\\panel_a_histogram_data.csv",
+      "sha256": "1bba275d747cb0f03527a0ca5ac7d27d8167d501056f0db45490556b4ec3f703"
+    },
+    {
+      "file": "panel_b_plot_data.csv",
+      "source": "D:\\WORK\\20261023\\R2_M3_\u8bad\u7ec3\u96c6\u6700\u8fd1\u90bb\u76f8\u4f3c\u5ea6\\outputs\\panel_b_plot_data.csv",
+      "sha256": "372db0405465a2ab8abc036dfc0d2f225598c8e14ccfc66fcdfcc5d98b0de53a"
+    }
+  ],
+  "similarity_script_source": "D:\\WORK\\20261023\\R2_M3_\u8bad\u7ec3\u96c6\u6700\u8fd1\u90bb\u76f8\u4f3c\u5ea6",
+  "duplicate_script_source": "D:\\WORK\\20261008\\IJMS_R1_8_Loss_and_Split_Audit\\run_audit.py",
+  "adaptation": "Package-relative paths; saved endpoint predictions reused; duplicate-only extraction from historical combined audit."
+}

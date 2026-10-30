@@ -1,0 +1,41 @@
+[
+  {
+    "file": "P1_nominal.inp",
+    "sample": "pattern4108_single_5x3_12",
+    "figure": "Fig. S5 baseline",
+    "element": "B31",
+    "analysis": "Dynamic Explicit",
+    "time_period_s": 0.05,
+    "target_engineering_strain": 0.5,
+    "historical_curve_end_strain": 0.5001232147216796,
+    "section_poisson": 0,
+    "source_input": "D:\\小论文\\ijms一修\\05_动力学梁实体与接触验证\\jobs\\P1_nominal.inp",
+    "sha256": "ad502fe1599eb4461913d90d73b67150e425123c0fb6448bb837ff906e3b1407"
+  },
+  {
+    "file": "P2_nominal.inp",
+    "sample": "pattern5220_single_5x3_12",
+    "figure": "Fig. S5 baseline",
+    "element": "B31",
+    "analysis": "Dynamic Explicit",
+    "time_period_s": 0.05,
+    "target_engineering_strain": 0.5,
+    "historical_curve_end_strain": 0.500113525390625,
+    "section_poisson": 0,
+    "source_input": "D:\\小论文\\ijms一修\\05_动力学梁实体与接触验证\\jobs\\P2_nominal.inp",
+    "sha256": "98a0df75e8ae67b1175acb05616146a834fb192c380b0ecebbf75401506cc3e9"
+  },
+  {
+    "file": "P3_nominal.inp",
+    "sample": "pattern5",
+    "figure": "Fig. S5 baseline",
+    "element": "B31",
+    "analysis": "Dynamic Explicit",
+    "time_period_s": 0.05,
+    "target_engineering_strain": 0.5,
+    "historical_curve_end_strain": 0.499996337890625,
+    "section_poisson": 0,
+    "source_input": "D:\\小论文\\ijms一修\\05_动力学梁实体与接触验证\\jobs\\P3_nominal.inp",
+    "sha256": "a6502fa5ef8fdc562cbf65e9c4bd56b9b7b76175937ca82c92db4491023220cf"
+  }
+]

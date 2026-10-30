@@ -1,4 +1,3 @@
-﻿#!/usr/bin/env python3
 import random
 import copy
 import math
@@ -10,15 +9,15 @@ import os
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hexagonal_loop import TiledHexGraph, HexagonalGraph
+from hexagonal_generator import TiledHexGraph, HexagonalGraph
 
 def _euclidean(a, b):
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
 def merge_close_nodes_graph_local(G: nx.Graph, tol: float = 1e-6, ndigits: int = 8) -> nx.Graph:
     nodes = list(G.nodes())
-    merged_coords = []  
-    mapping = {}  
+    merged_coords = []
+    mapping = {}
     for n in nodes:
         matched = False
         for rep in merged_coords:
@@ -128,8 +127,8 @@ class LatticeState:
             ndigits=ndigits
         )
 
-        self.loop1 = []  
-        self.loop2 = []  
+        self.loop1 = []
+        self.loop2 = []
 
         self.center_loop1 = self.loop1
         self.center_loop2 = self.loop2
@@ -236,10 +235,10 @@ class LatticeState:
         cell_id = 0
         for i in range(self.num_cols):
             x = i * 1.5 * L
-            if ((i + 1) % 2) == 1:  
+            if ((i + 1) % 2) == 1:
                 n_cells = self.num_rows
                 y_start = -0.5 * math.sqrt(3) * L
-            else:  
+            else:
                 n_cells = self.num_rows - 1
                 y_start = 0.0
 
@@ -264,7 +263,7 @@ class LatticeState:
                 cell_id += 1
 
         try:
-            from hexagonal_loop import merge_close_nodes_graph, break_long_edges_with_intermediate_nodes
+            from hexagonal_generator import merge_close_nodes_graph, break_long_edges_with_intermediate_nodes
             G_global = merge_close_nodes_graph(G_global, tol=merge_tol, ndigits=self.ndigits)
             G_global = break_long_edges_with_intermediate_nodes(G_global, tol=break_tol)
         except Exception as e:

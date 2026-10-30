@@ -1,0 +1,15 @@
+{
+  "seed": "42",
+  "method": "Greedy",
+  "actual_gnn_calls": "100000",
+  "best_sea_raw": "905.4651489257812",
+  "best_call_index": "55107",
+  "n90_threshold": "814.9186340332031",
+  "n90": "14170.0",
+  "right_censored": "False",
+  "censor_call": "",
+  "tail_episode_best_mean_(0.9B,B]": "700.9632216509651",
+  "tail_episode_count": "85",
+  "device": "cpu",
+  "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460"
+}

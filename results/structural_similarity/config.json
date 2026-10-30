@@ -1,0 +1,12 @@
+{
+  "coordinate_tolerance": 0.02,
+  "angle_tolerance_degrees": 15,
+  "sensitivity_tolerances": [
+    0.01,
+    0.02,
+    0.04
+  ],
+  "endpoint_strain": 0.5,
+  "seed": 42,
+  "network_scope": "internal network of repeated unit cell within the common fixed 5x3 array"
+}

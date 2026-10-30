@@ -1,0 +1,37 @@
+[
+  {
+    "file": "Fig_S17/training_curves.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\05_奖励截顶敏感性\\R1-9-1_三种子四配置\\results\\figures_three_seeds\\training_curves_Origin.csv",
+    "sha256": "3aa436db7a0e60d99474c4268b78ee5cad56b3d7c4dc190ec828cb5ebc8edab5"
+  },
+  {
+    "file": "Fig_S17/best_so_far_curves.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\05_奖励截顶敏感性\\R1-9-1_三种子四配置\\results\\figures_three_seeds\\best_so_far_curves_Origin.csv",
+    "sha256": "2254af4980361f6be99ce454c657d45b19bb11cdb3e94524201de24341783183"
+  },
+  {
+    "file": "Fig_S17/per_seed_results.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\05_奖励截顶敏感性\\R1-9-1_三种子四配置\\results\\per_seed_results.csv",
+    "sha256": "712e633b0fe5781117964a6ad1f9b5d5385d574967cc4f2758517f831611c2c2"
+  },
+  {
+    "file": "Fig_S17/table_summary.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\05_奖励截顶敏感性\\R1-9-1_三种子四配置\\results\\aggregate_summary.csv",
+    "sha256": "4850522a23855311f80a0b5d32d853839a04f79c71fe81b9e6d3597b6160b0e0"
+  },
+  {
+    "file": "Fig_S18/individual_curves.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\30种子阶段结果\\four_schedules_selected3_individual_data.csv",
+    "sha256": "e1404debd937a749ad774d85c32fb19c1bcc671a38d0f070d5c7ea12ebad1a2b"
+  },
+  {
+    "file": "Fig_S18/mean_SD_curves.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\30种子阶段结果\\four_schedules_selected3_plot_data.csv",
+    "sha256": "391141dd46d00527d92726382e9033ef22e2273c1d5e4a0a3ad09439c3b2f17d"
+  },
+  {
+    "file": "Fig_S18/table_summary.csv",
+    "source": "D:\\小论文\\ijms一修\\08_R1_9_优化器审稿意见\\30种子阶段结果\\four_schedules_selected3_statistics.csv",
+    "sha256": "2a3e5b0c731ff30409cac751c3f0c700bc212d7127ba2ec384c028bfe18c8c40"
+  }
+]

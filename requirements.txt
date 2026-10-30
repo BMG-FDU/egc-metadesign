@@ -1,0 +1,16 @@
+# Python 3.11; Abaqus 2024 is installed separately.
+# Install the CUDA 12.9 PyTorch build using the README command first.
+torch==2.8.0
+torch-geometric==2.5.3
+numpy==1.24.3
+pandas==2.3.2
+scipy==1.15.3
+scikit-learn==1.7.1
+matplotlib==3.10.5
+networkx==3.3
+gymnasium==1.2.3
+stable-baselines3==2.7.1
+sb3-contrib==2.7.1
+tqdm==4.67.1
+tensorboard==2.20.0
+rich==14.2.0

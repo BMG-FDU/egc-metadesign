@@ -1,0 +1,4 @@
+﻿method,edge_count,odd_degree_nodes,closed,turn_count,total_turn_deg,turns_above_150_deg,fraction_above_150_deg
+Hierholzer,286,0,True,285,20741.05235873453,46,0.16140350877192983
+Momentum,286,0,True,285,14500.149441149108,21,0.07368421052631578
+Look-ahead,286,0,True,285,14589.142429880945,16,0.056140350877192984

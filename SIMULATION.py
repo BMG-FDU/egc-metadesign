@@ -1,4 +1,4 @@
-﻿from abaqus import *
+from abaqus import *
 from abaqusConstants import *
 import __main__
 import os
@@ -17,38 +17,42 @@ import visualization
 import xyPlot
 import displayGroupOdbToolset as dgo
 
-# ---------- Yeoh 3rd-order coefficients (requested) ----------
+
 C10 = 2.58
 C20 = -0.20
 C30 = 1.93E-02
-# ------------------------------------------------------------
+
 
 PROFILE_A = 1.0
 PROFILE_B = 1.0
 ENCLOSED_AREA_SCALE = 0.9
-U2_VALUE = 50.0
+
+
+TARGET_ENGINEERING_STRAIN = 0.50
+
+
+EXPLICIT_TIME_PERIOD = 0.05
+FIELD_OUTPUT_INTERVALS = 100
 NUM_CPUS = 12
 NUM_GPUS = 0
 MEMORY_PCT = 90
-THRESHOLD_STRAIN = 0.5
+THRESHOLD_STRAIN = 0
 
-# 在 mm-N-s 体系下可写成 1.10e-9 ~ 1.25e-9 tonne/mm³
-MATERIAL_DENSITY = 1.15e-9       
-# -----------------------------------------------------------------------
 
-# ========================= 单位换算（mm-N-s）=========================
-ENERGY_TO_KJ_M3 = 1.0e3   
-SEA_TO_J_KG = 1.0e-6      
-# ===========================================================================
+MATERIAL_DENSITY = 1.15e-9
+
+
+ENERGY_TO_KJ_M3 = 1.0e3
+SEA_TO_J_KG = 1.0e-6
 
 
 BASE_DIR = os.getcwd()
 GRAPH_DIR = os.path.join(BASE_DIR, 'graph')
 
 VARIABLES = ['RF2', 'U2']
+APPLIED_DISPLACEMENT = {}
+JOB_STATUS = {}
 
-
-# ========================= 辅助函数 =========================
 
 def get_model_dimensions(model_name):
     try:
@@ -194,8 +198,6 @@ def get_total_enclosed_area(model_name):
         return None
 
 
-# ========================= 模型构建 =========================
-
 def import_model(inp_path, model_name):
     mdb.ModelFromInputFile(name=model_name, inputFileName=inp_path)
     if 'Model-1' in mdb.models:
@@ -217,13 +219,15 @@ def define_material_and_section(model_name):
         if 'TPU-95A' in mdl.materials:
             del mdl.materials['TPU-95A']
         mdl.Material(name='TPU-95A')
-        # ------------------ Yeoh 三阶本构 ------------------
+
         mdl.materials['TPU-95A'].Hyperelastic(
             materialType=ISOTROPIC, testData=OFF, type=YEOH,
             table=((C10, C20, C30),),
             volumetricResponse=VOLUMETRIC_DATA
         )
-        # -----------------------------------------------------------
+
+        mdl.materials['TPU-95A'].Density(table=((MATERIAL_DENSITY,),))
+
     except Exception as e:
         print("Error defining material: %s" % e)
 
@@ -266,8 +270,6 @@ def define_material_and_section(model_name):
         print("Error in section assignment: %s" % e)
 
 
-# ========================= 装配与边界条件 =========================
-
 def assemble_and_step(model_name):
     try:
         mdl = mdb.models[model_name]
@@ -296,15 +298,16 @@ def assemble_and_step(model_name):
             print("Warning: failed to delete step '%s': %s" % (sname, e))
 
     try:
-        mdl.StaticStep(
-            name=step_name, previous='Initial', maxNumInc=10000,
-            initialInc=0.001, minInc=1e-6, maxInc=0.05, nlgeom=ON
+        mdl.ExplicitDynamicsStep(
+            name=step_name, previous='Initial',
+            timePeriod=EXPLICIT_TIME_PERIOD,
+            improvedDtMethod=ON
         )
     except Exception as e:
         print("ERROR creating step: %s" % e)
         return
 
-    # -----------------创建 Smooth Step 幅值 -----------------
+
     amp_name = 'SMOOTH_STEP_AMP'
     try:
         if amp_name in mdl.amplitudes:
@@ -314,12 +317,15 @@ def assemble_and_step(model_name):
             except Exception as e:
                 print("Warning: failed to delete existing amplitude %s: %s" % (amp_name, e))
 
-        mdl.SmoothStepAmplitude(name=amp_name, timeSpan=STEP, data=((0.0, 0.0), (1.0, 1.0)))
-        # mdl.SmoothStepAmplitude(name=amp_name, timeSpan=STEP, data=((0.0, 0.0), (0.3, 0.1), (0.5, 0.2), (0.6, 0.3), (1.0, 1.0)))
-        print("Created SmoothStepAmplitude: %s with data ((0.0,0.0),(1.0,1.0))" % amp_name)
+        mdl.SmoothStepAmplitude(
+            name=amp_name, timeSpan=STEP,
+            data=((0.0, 0.0), (EXPLICIT_TIME_PERIOD, 1.0))
+        )
+        print("Created SmoothStepAmplitude: %s over %.6g s" %
+              (amp_name, EXPLICIT_TIME_PERIOD))
     except Exception as e:
         print("Warning: failed to create SmoothStepAmplitude '%s': %s" % (amp_name, e))
-    # -------------------------------------------------------------
+
 
     if not a.instances:
         print("ERROR: No instances found in assembly for model %s" % model_name)
@@ -364,6 +370,10 @@ def assemble_and_step(model_name):
             mdl.EncastreBC(name='FIX', createStepName='Initial', region=bset)
             print("Created EncastreBC on BOTTOM (%d nodes) at Initial step" % len(bottom))
 
+        model_height = float(max_y - min_y)
+        target_u2 = TARGET_ENGINEERING_STRAIN * model_height
+        APPLIED_DISPLACEMENT[model_name] = target_u2
+
         top = inst1.nodes.getByBoundingBox(
             xMin=-1e9, xMax=1e9,
             yMin=max_y - tol, yMax=max_y + tol,
@@ -377,18 +387,36 @@ def assemble_and_step(model_name):
             tset = a.Set(nodes=top, name='TOP')
             mdl.DisplacementBC(
                 name='BC-2', createStepName=step_name, region=tset,
-                u1=0, u2=U2_VALUE, u3=0, ur1=UNSET, ur2=UNSET, ur3=UNSET,
+                u1=0, u2=target_u2, u3=0, ur1=UNSET, ur2=UNSET, ur3=UNSET,
                 amplitude=amp_name
             )
-            #                amplitude=amp_name
+
             print("Created DisplacementBC on TOP (%d nodes) at %s with amplitude %s"
                   % (len(top), step_name, amp_name))
+            print("Model height = %.8g mm; target engineering strain = %.4f; U2 = %.8g mm"
+                  % (model_height, TARGET_ENGINEERING_STRAIN, target_u2))
 
     except Exception as e:
         print("ERROR in assemble_and_step BC creation: %s" % e)
 
 
-# ========================= 提交任务 =========================
+    try:
+        for request_name in list(mdl.fieldOutputRequests.keys()):
+            del mdl.fieldOutputRequests[request_name]
+        mdl.FieldOutputRequest(
+            name='F-Output-1', createStepName=step_name,
+            variables=('U', 'RF'), numIntervals=FIELD_OUTPUT_INTERVALS
+        )
+        for request_name in list(mdl.historyOutputRequests.keys()):
+            del mdl.historyOutputRequests[request_name]
+        mdl.HistoryOutputRequest(
+            name='H-ENERGY', createStepName=step_name,
+            variables=('ALLIE', 'ALLKE', 'ETOTAL'),
+            numIntervals=FIELD_OUTPUT_INTERVALS
+        )
+    except Exception as e:
+        print("WARNING: failed to configure Explicit output requests: %s" % e)
+
 
 def submit_job(model_name, job_name):
     try:
@@ -407,14 +435,30 @@ def submit_job(model_name, job_name):
         j.submit(consistencyChecking=OFF)
         print("Job %s submitted, waiting for completion..." % job_name)
         j.waitForCompletion()
-        print("Job %s completed successfully" % job_name)
-        return True
+        status_text = str(j.status)
+        if status_text in ('None', '', 'UNKNOWN'):
+            sta_path = os.path.join(BASE_DIR, '%s.sta' % job_name)
+            if os.path.exists(sta_path):
+                try:
+                    with open(sta_path, 'r') as sta_file:
+                        sta_text = sta_file.read().upper()
+                    if 'THE ANALYSIS HAS COMPLETED SUCCESSFULLY' in sta_text:
+                        status_text = 'COMPLETED'
+                    elif 'THE ANALYSIS HAS NOT BEEN COMPLETED' in sta_text:
+                        status_text = 'ABORTED'
+                except Exception:
+                    pass
+        JOB_STATUS[job_name] = status_text
+        if status_text.upper() == 'COMPLETED':
+            print("Job %s completed successfully" % job_name)
+            return True
+        print("Job %s finished with non-completed status: %s" % (job_name, status_text))
+        return False
     except Exception as e:
+        JOB_STATUS[job_name] = 'EXCEPTION: %s' % e
         print("Job %s failed: %s" % (job_name, e))
         return False
 
-
-# ========================= 读取 XY 数据 =========================
 
 def _get_xydata_points_from_session(name):
     try:
@@ -454,17 +498,15 @@ def _get_xydata_points_from_session(name):
         return None
 
 
-# ========================= CSV 输出 =========================
-
 def save_stress_strain_csv(model_name, ss_pairs, energy_density_list,
-                           sea_list, data_dir):                        
+                           sea_list, data_dir):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     csv_out = os.path.join(data_dir, "%s.csv" % model_name)
     try:
         with open(csv_out, 'w', newline='') as f:
             w = csv.writer(f)
-            w.writerow(['strain', 'stress(MPa)', 'energy_density(kJ/m^3)', 'SEA(J/kg)'])  
+            w.writerow(['strain', 'stress(MPa)', 'energy_density(kJ/m^3)', 'SEA(J/kg)'])
             n = min(len(ss_pairs), len(energy_density_list), len(sea_list))
             for i in range(n):
                 try:
@@ -481,8 +523,6 @@ def save_stress_strain_csv(model_name, ss_pairs, energy_density_list,
         print("Failed to save CSV for %s : %s" % (model_name, e))
         return None
 
-
-# ========================= 核心：应力-应变 + 能量 + SEA =========================
 
 def convert_xydata_to_stress_strain_and_save(model_name, data_dir,
                                              thickness_override=None):
@@ -526,20 +566,20 @@ def convert_xydata_to_stress_strain_and_save(model_name, data_dir,
               % (model_name, sx, thickness))
         return None
 
-    A  = float(sx) * float(thickness)   
-    L0 = float(sy)                     
+    A  = float(sx) * float(thickness)
+    L0 = float(sy)
     if L0 == 0.0:
         print("Invalid L0 for %s" % model_name)
         return None
 
-    V_envelope = float(sx) * float(sy) * float(thickness)   
+    V_envelope = float(sx) * float(sy) * float(thickness)
 
-    L_total = get_total_length(model_name)                 
+    L_total = get_total_length(model_name)
     prof_a_val = float(PROFILE_A)
     prof_b_val = float(PROFILE_B)
     if L_total and L_total > 0:
-        V_material = L_total * prof_a_val * prof_b_val       
-        mass = float(MATERIAL_DENSITY) * V_material           
+        V_material = L_total * prof_a_val * prof_b_val
+        mass = float(MATERIAL_DENSITY) * V_material
     else:
         V_material = None
         mass = None
@@ -552,7 +592,7 @@ def convert_xydata_to_stress_strain_and_save(model_name, data_dir,
         sea_factor = None
         print("WARNING: Cannot compute SEA — mass is zero or unavailable "
               "(L_total=%s, density=%s)" % (L_total, MATERIAL_DENSITY))
-    # ----------------------------------------------------------------
+
 
     ss_signed = []
     for i, x in enumerate(common_x):
@@ -717,17 +757,15 @@ def convert_xydata_to_stress_strain_and_save(model_name, data_dir,
     if sea_list:
         print("Final SEA at max strain = %.6g N·mm/tonne = %.6g J/kg"
               % (sea_list[-1], sea_list[-1] * SEA_TO_J_KG))
-    # ----------------------------------------------------------------
+
 
     csv_path = save_stress_strain_csv(
         model_name, truncated_pairs, energy_density,
-        sea_list, data_dir)                                 
+        sea_list, data_dir)
 
     return {'stress_csv': csv_path, 'n': len(truncated_pairs),
             'SEA_final_J_kg': sea_list[-1] * SEA_TO_J_KG if sea_list else None}
 
-
-# ========================= 后处理 =========================
 
 def post_process(model_name, odb_path, node_set='TOP'):
     if not os.path.exists(odb_path):
@@ -851,9 +889,8 @@ def verify_beam_display(model_name):
         print("梁显示验证失败: %s" % e)
 
 
-# ========================= 主流程 =========================
-
 if __name__ == '__main__':
+    test_rows = []
     for fname in os.listdir(GRAPH_DIR):
         if not fname.lower().endswith('.inp'):
             continue
@@ -895,9 +932,42 @@ if __name__ == '__main__':
                 print("Skipping post-processing for %s — job failed or "
                       "ODB not found" % model_y)
 
+            csv_path = os.path.join(BASE_DIR, 'data', '%s.csv' % model_y)
+            test_rows.append({
+                'model': model_y,
+                'inp_file': fname,
+                'target_engineering_strain': TARGET_ENGINEERING_STRAIN,
+                'applied_u2_mm': APPLIED_DISPLACEMENT.get(model_y, ''),
+                'job_status': JOB_STATUS.get(job_y, 'UNKNOWN'),
+                'odb_exists': os.path.exists(odb_y),
+                'csv_exists': os.path.exists(csv_path),
+                'success': bool(success and os.path.exists(odb_y)),
+            })
+
         except Exception as e:
             print("Error processing %s: %s" % (model_y, e))
+            test_rows.append({
+                'model': model_y,
+                'inp_file': fname,
+                'target_engineering_strain': TARGET_ENGINEERING_STRAIN,
+                'applied_u2_mm': APPLIED_DISPLACEMENT.get(model_y, ''),
+                'job_status': 'EXCEPTION: %s' % e,
+                'odb_exists': os.path.exists(odb_y),
+                'csv_exists': False,
+                'success': False,
+            })
             continue
+
+    summary_path = os.path.join(BASE_DIR, 'test_summary.csv')
+    fields = [
+        'model', 'inp_file', 'target_engineering_strain', 'applied_u2_mm',
+        'job_status', 'odb_exists', 'csv_exists', 'success'
+    ]
+    with open(summary_path, 'w', newline='') as summary_file:
+        writer = csv.DictWriter(summary_file, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(test_rows)
+    print("Test summary saved: %s" % summary_path)
 
     print("\nAll models processed. Individual CSV files are in: %s"
           % os.path.join(BASE_DIR, 'data'))

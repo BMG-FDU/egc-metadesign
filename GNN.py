@@ -1,5 +1,3 @@
-﻿#!/usr/bin/env python3
-# gnn.py
 import os, sys, json, glob, argparse, math, time
 import random
 import itertools
@@ -17,12 +15,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from matplotlib.collections import LineCollection
 
-try:
-    import shap
-    SHAP_AVAILABLE = True
-except ImportError:
-    SHAP_AVAILABLE = False
-    print("SHAP not installed, SHAP analysis will be skipped.")
 
 try:
     from torch_geometric.loader import DataLoader
@@ -31,9 +23,7 @@ except Exception:
 from torch_geometric.data import Data, Dataset as PyGDataset
 from torch_geometric.nn import GINConv, GINEConv, global_mean_pool, global_max_pool
 
-# ===================================================================
-# ---         Matplotlib Style + Paper Palette                   ---
-# ===================================================================
+
 PAPER_BLUE = "#2F5597"
 PAPER_BLUE_DARK = "#1F3864"
 PAPER_BLUE_LIGHT = "#4E6EA7"
@@ -196,23 +186,19 @@ def save_png(fig, path, dpi=600, transparent=False, pad=0.025):
 
 set_mpl_style()
 
-# ===================================================================
-# ---         【调参配置】 Configuration for Tuning             ---
-# ===================================================================
+
 TUNING_GRID = {
     'lr': [1e-3, 1e-4, 5e-5, 1e-5],
     'hidden': [256],
     'batch_size': [8, 4],
     'pooling_type': ['dual'],
-    'use_global_feat': [0],
+    'use_global_feat': [1],
     'use_denom_head': [1],
     'use_edge_feat': [1],
     'decoder_type': ['cnn', 'mlp'],
 }
 
-# ===================================================================
-# ---         Helpers & Utilities                              ---
-# ===================================================================
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -331,9 +317,7 @@ def parse_networkx_json(path):
     data.global_feat = torch.tensor(global_features_list, dtype=torch.float)
     return data
 
-# ===================================================================
-# ---     Single Hexagon Feature Extraction (For SHAP)            ---
-# ===================================================================
+
 def is_inside_hexagon(p, poly_coords, center_coord, tol=1e-4):
     for i in range(len(poly_coords)):
         p1 = poly_coords[i]
@@ -349,99 +333,6 @@ def is_inside_hexagon(p, poly_coords, center_coord, tol=1e-4):
             return False
     return True
 
-def get_single_hex_features_from_json(json_path):
-    with open(json_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    nodes = data.get('nodes', data.get('vertices', []))
-    links = data.get('links', data.get('edges', []))
-    if not nodes:
-        return None
-
-    v_nodes = []
-    seen_labels = set()
-    for node in nodes:
-        lbl = node.get('label') if isinstance(node, dict) else None
-        if lbl in ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'] and lbl not in seen_labels:
-            v_nodes.append(node)
-            seen_labels.add(lbl)
-        if len(v_nodes) == 6:
-            break
-
-    if len(v_nodes) < 6:
-        return None
-
-    def get_pos(n):
-        if isinstance(n, dict):
-            if 'pos' in n and n['pos'] is not None and len(n['pos']) >= 2:
-                return [float(n['pos'][0]), float(n['pos'][1])]
-            if 'x' in n and 'y' in n:
-                return [float(n['x']), float(n['y'])]
-            nid = n.get('id', None)
-            if isinstance(nid, str) and ',' in nid:
-                try:
-                    px, py = nid.split(',', 1)
-                    return [float(px), float(py)]
-                except Exception:
-                    pass
-        return [0.0, 0.0]
-
-    cx = sum(get_pos(n)[0] for n in v_nodes) / 6.0
-    cy = sum(get_pos(n)[1] for n in v_nodes) / 6.0
-    center = (cx, cy)
-    v_nodes_sorted = sorted(
-        v_nodes,
-        key=lambda n: math.atan2(get_pos(n)[1] - cy, get_pos(n)[0] - cx)
-    )
-    poly = [get_pos(n) for n in v_nodes_sorted]
-
-    single_hex_nodes = []
-    valid_ids = set()
-    pos_dict = {}
-    for node in nodes:
-        p = get_pos(node)
-        if is_inside_hexagon(p, poly, center):
-            single_hex_nodes.append(node)
-            nid = node.get('id', node.get('name', len(valid_ids))) if isinstance(node, dict) else len(valid_ids)
-            valid_ids.add(str(nid))
-            pos_dict[str(nid)] = np.array([p[0], p[1]], dtype=float)
-
-    edges = []
-    edge_set = set()
-    for link in links:
-        if not isinstance(link, dict):
-            continue
-        src = str(link.get('source', link.get('u')))
-        tgt = str(link.get('target', link.get('v')))
-        if src in valid_ids and tgt in valid_ids and src != tgt:
-            key = frozenset((src, tgt))
-            if key not in edge_set:
-                edge_set.add(key)
-                edges.append((src, tgt))
-
-    N = len(single_hex_nodes)
-    E = len(edges)
-
-    lengths = []
-    for u, v in edges:
-        a, b = pos_dict[u], pos_dict[v]
-        lengths.append(float(np.linalg.norm(b - a)))
-    lengths = np.asarray(lengths, dtype=float)
-
-    if lengths.size > 0:
-        mean_len = float(np.mean(lengths))
-        std_len = float(np.std(lengths, ddof=1)) if len(lengths) > 1 else 0.0
-    else:
-        mean_len = 0.0
-        std_len = 0.0
-
-    if N <= 1:
-        sparsity = 1.0
-    else:
-        density = (2.0 * E) / (N * (N - 1))
-        sparsity = float(np.clip(1.0 - density, 0.0, 1.0))
-
-    return [float(N), float(E), mean_len, std_len, sparsity]
 
 def read_csv_new(path):
     df = pd.read_csv(path, sep=None, engine='python', on_bad_lines='skip')
@@ -1008,153 +899,38 @@ def evaluate_with_total_loss(model, loader, device, C_curve, C_scalar, L, lambda
             all_pred_scalar.append(pred_scalar)
     if n_graphs == 0:
         return None, float('inf')
-    avg_total_loss = (total_curve_loss / n_graphs) + lambda_denom * (total_denom_loss / n_graphs)
+
+
+    curve_output_count = C_curve * L + C_scalar
+    denom_output_count = C_curve + C_scalar
+    avg_curve_loss = total_curve_loss / (n_graphs * curve_output_count)
+    avg_denom_loss = total_denom_loss / (n_graphs * denom_output_count)
+    avg_total_loss = avg_curve_loss + lambda_denom * avg_denom_loss
     results = (np.vstack(all_y_curves), np.vstack(all_pred_curves), np.vstack(all_y_scalar), np.vstack(all_pred_scalar))
     return results, math.sqrt(avg_total_loss)
 
-def plot_shap_analysis(X_test, Y_pred, X_feat_names, outdir, title="Cell-level descriptor SHAP"):
-    if not SHAP_AVAILABLE:
-        print("SHAP not available, skipping SHAP analysis.")
-        return
 
-    print(f"\n--- Running cell-level SHAP Analysis (Shape: {np.array(X_test).shape}) ---")
-    X_test = np.asarray(X_test, dtype=float)
-    Y_pred = np.asarray(Y_pred, dtype=float).reshape(-1)
+def get_seven_hex_features_from_json(json_path):
 
-    if X_test.ndim != 2 or X_test.shape[0] < 3:
-        print("SHAP skipped: not enough valid samples.")
-        return
+    from seven_descriptor_shap import extract_seven_descriptors
+    return extract_seven_descriptors(json_path, is_inside_hexagon)
 
-    # Save the exact input table for traceability.
-    shap_dir = Path(outdir)
-    pd.DataFrame(X_test, columns=X_feat_names).assign(
-        pred_endpoint_SEA_J_per_kg=Y_pred
-    ).to_csv(shap_dir / "SHAP_single_hex_5feat_input_table.csv", index=False, encoding="utf-8-sig")
+def plot_shap_analysis(X_test, Y_pred, X_feat_names, outdir,
+                       title="Seven-descriptor linear-proxy SHAP", surrogate="linear", *,
+                       sample_ids=None, fidelity_fraction=0.20, seed=42, predictor_path=None):
 
-    X_ref = X_test.copy()
-    y_ref = Y_pred.copy()
+    from seven_descriptor_shap import FEATURE_NAMES, analyze_seven_descriptors
+    if list(X_feat_names) != FEATURE_NAMES:
+        raise ValueError("SHAP requires the original five descriptors plus two orientation fractions")
+    if surrogate != "linear":
+        raise ValueError("The revised manuscript uses a seven-descriptor linear proxy")
+    return analyze_seven_descriptors(
+        X_test, Y_pred, outdir, sample_ids=sample_ids, seed=seed,
+        fidelity_fraction=fidelity_fraction, predictor_path=predictor_path)
 
-    mu = np.nanmean(X_ref, axis=0, keepdims=True)
-    sd = np.nanstd(X_ref, axis=0, keepdims=True)
-    sd[sd < 1e-12] = 1.0
-    X_ref_z = (X_ref - mu) / sd
-
-    def model_predict_func(x):
-        x = np.asarray(x, dtype=float)
-        xz = (x - mu) / sd
-        preds = []
-        for row in xz:
-            d = np.linalg.norm(X_ref_z - row[None, :], axis=1)
-            k = min(10, len(d))
-            nn_idx = np.argpartition(d, k - 1)[:k]
-            w = 1.0 / (d[nn_idx] + 1e-8)
-            preds.append(float(np.sum(w * y_ref[nn_idx]) / np.sum(w)))
-        return np.asarray(preds)
-
-    try:
-        n_bg = min(50, len(X_ref))
-        n_exp = min(180, len(X_ref))
-        rng = np.random.default_rng(42)
-        bg_idx = rng.choice(len(X_ref), size=n_bg, replace=False) if len(X_ref) > n_bg else np.arange(len(X_ref))
-        ex_idx = rng.choice(len(X_ref), size=n_exp, replace=False) if len(X_ref) > n_exp else np.arange(len(X_ref))
-        X_background = X_ref[bg_idx]
-        X_explain = X_ref[ex_idx]
-
-        explainer = shap.KernelExplainer(model_predict_func, X_background)
-        shap_values = explainer.shap_values(X_explain, silent=True)
-        if isinstance(shap_values, list):
-            shap_values = shap_values[0]
-        shap_values = np.asarray(shap_values, dtype=float)
-        if shap_values.ndim == 3:
-            shap_values = shap_values[..., 0]
-
-        mean_abs = np.nanmean(np.abs(shap_values), axis=0)
-
-        pd.DataFrame(X_explain, columns=X_feat_names).to_csv(
-            shap_dir / "SHAP_single_hex_5feat_explained_X.csv", index=False, encoding="utf-8-sig"
-        )
-        pd.DataFrame(shap_values, columns=X_feat_names).to_csv(
-            shap_dir / "SHAP_single_hex_5feat_values.csv", index=False, encoding="utf-8-sig"
-        )
-        pd.DataFrame({
-            "feature": X_feat_names,
-            "mean_abs_shap": mean_abs,
-        }).sort_values("mean_abs_shap", ascending=False).to_csv(
-            shap_dir / "SHAP_single_hex_5feat_importance.csv", index=False, encoding="utf-8-sig"
-        )
-
-        labels = [
-            "Node count" if s in ["N_nodes", "Node count"] else
-            "Edge count" if s in ["E_edges", "Edge count"] else
-            "Mean edge length" if s in ["Mean_Edge_Len", "Mean edge length"] else
-            "Edge-length std" if s in ["Std_Edge_Len", "Edge-length std"] else
-            "Structural sparsity" if s in ["Sparsity", "Structural sparsity"] else
-            str(s).replace("_", " ")
-            for s in X_feat_names
-        ]
-
-        order = np.argsort(mean_abs)
-        fig, ax = plt.subplots(figsize=(3.15, 2.15), dpi=600)
-        ypos = np.arange(len(order))
-        ax.barh(ypos, mean_abs[order], color=PAPER_BLUE, edgecolor="none", height=0.54)
-        ax.set_yticks(ypos)
-        ax.set_yticklabels([labels[i] for i in order], fontsize=7.6)
-        ax.set_xlabel("mean |SHAP value|", fontsize=8.3)
-        ax.tick_params(axis="x", labelsize=7.4)
-        style_axes(ax, full_box=False)
-        ax.spines["left"].set_visible(False)
-        ax.tick_params(axis="y", length=0)
-        fig.tight_layout(pad=0.16)
-        save_png(fig, os.path.join(outdir, "SHAP_single_hex_5feat_bar.png"), dpi=600, transparent=False)
-
-        # -------- signed SHAP dot plot --------
-        order_desc = np.argsort(mean_abs)[::-1]
-        fig, ax = plt.subplots(figsize=(3.55, 2.35), dpi=600)
-        rng = np.random.default_rng(42)
-        cmap = mpl.colors.LinearSegmentedColormap.from_list(
-            "paper_blue_orange",
-            [PAPER_BLUE_LIGHTER, PAPER_BLUE, PAPER_ORANGE_LIGHT, PAPER_ORANGE]
-        )
-
-        for row_id, feat_idx in enumerate(order_desc):
-            vals_shap = shap_values[:, feat_idx]
-            feat_vals = X_explain[:, feat_idx]
-            if np.nanmax(feat_vals) > np.nanmin(feat_vals):
-                cval = (feat_vals - np.nanmin(feat_vals)) / (np.nanmax(feat_vals) - np.nanmin(feat_vals))
-            else:
-                cval = np.full_like(feat_vals, 0.5, dtype=float)
-            jitter = rng.normal(0, 0.055, size=len(vals_shap))
-            y_pos = np.full(len(vals_shap), row_id) + jitter
-
-            ax.scatter(
-                vals_shap,
-                y_pos,
-                c=cval,
-                cmap=cmap,
-                s=7.5,
-                alpha=0.72,
-                edgecolors="none",
-                zorder=3,
-            )
-
-        ax.axvline(0, color=GRAY_LINE, linewidth=0.75, linestyle="--", zorder=1)
-        ax.set_yticks(np.arange(len(order_desc)))
-        ax.set_yticklabels([labels[i] for i in order_desc], fontsize=7.3)
-        ax.set_xlabel("SHAP value", fontsize=8.3)
-        ax.tick_params(axis="x", labelsize=7.3)
-        style_axes(ax, full_box=False)
-        ax.spines["left"].set_visible(False)
-        ax.tick_params(axis="y", length=0)
-        fig.tight_layout(pad=0.16)
-        save_png(fig, os.path.join(outdir, "SHAP_single_hex_5feat_dot.png"), dpi=600, transparent=False)
-
-        print("SHAP plots saved: SHAP_single_hex_5feat_bar.png and SHAP_single_hex_5feat_dot.png")
-
-    except Exception as e:
-        print(f"SHAP analysis failed: {e}")
 
 def plot_training_history(history_df, outdir):
-    """Publication-style Fig.5 training/validation convergence; PNG only."""
+
     epochs = history_df['epoch'].to_numpy(dtype=float)
     train_loss = history_df['train_total_rel_pct'].to_numpy(dtype=float)
     val_df = history_df.dropna(subset=['val_total_rel_pct'])
@@ -1191,8 +967,21 @@ def plot_training_history(history_df, outdir):
 
     save_png(fig, os.path.join(outdir, "training_loss_curve.png"), dpi=600, transparent=False)
 
+def curve_value_at_strain(curves, strain_grid, target_strain=0.5):
+    values = np.asarray(curves, dtype=float)
+    grid = np.asarray(strain_grid, dtype=float)
+    if grid.ndim != 1 or len(grid) < 2 or values.shape[-1] != len(grid):
+        raise ValueError("Curve and strain-grid dimensions do not match")
+    if not np.all(np.isfinite(grid)) or not np.all(np.diff(grid) > 0):
+        raise ValueError("Strain grid must be finite and strictly increasing")
+    if target_strain < grid[0] - 1e-8 or target_strain > grid[-1] + 1e-8:
+        raise ValueError("Strain grid does not cover the requested endpoint")
+    flat = values.reshape(-1, len(grid))
+    return np.asarray([np.interp(target_strain, grid, row) for row in flat]).reshape(values.shape[:-1])
+
+
 def plot_accuracy_scatter(pred_curve_dir, outdir):
-    """Publication-style predicted-vs-FEM max SEA parity plot; PNG only."""
+
     print("\n--- 生成预测精度散点图 / publication parity plot ---")
     pred_files = glob.glob(os.path.join(pred_curve_dir, '*.csv'))
     if not pred_files:
@@ -1205,7 +994,10 @@ def plot_accuracy_scatter(pred_curve_dir, outdir):
             true_col = next(c for c in df.columns if c.lower().endswith('_true'))
             pred_col = next(c for c in df.columns if c.lower().endswith('_pred'))
             base_name = true_col[:-5] if true_col.lower().endswith('_true') else 'SEA'
-            pairs[base_name].append((float(df[true_col].max()), float(df[pred_col].max())))
+            endpoint = curve_value_at_strain(
+                df[[true_col, pred_col]].to_numpy(dtype=float).T,
+                df['strain'].to_numpy(dtype=float), 0.5)
+            pairs[base_name].append((float(endpoint[0]), float(endpoint[1])))
         except (StopIteration, IndexError, ValueError):
             continue
 
@@ -1239,8 +1031,8 @@ def plot_accuracy_scatter(pred_curve_dir, outdir):
         ax.set_aspect("equal", adjustable="box")
 
         display_name = "SEA (J/kg)" if "sea" in str(name).lower() else str(name).replace("_", " ")
-        ax.set_xlabel(f"FEM max {display_name}", fontsize=8.2)
-        ax.set_ylabel(f"GNN max {display_name}", fontsize=8.2)
+        ax.set_xlabel(f"FEM {display_name} at 0.5 strain", fontsize=8.2)
+        ax.set_ylabel(f"GNN {display_name} at 0.5 strain", fontsize=8.2)
         ax.tick_params(axis="both", labelsize=7.2)
         style_axes(ax, full_box=True)
         ax.text(
@@ -1258,7 +1050,7 @@ def plot_accuracy_scatter(pred_curve_dir, outdir):
         print(f"{display_name} parity plot (R²={r2:.3f}) saved.")
 
 def plot_selected_test_samples(true_curves, pred_curves, strain_grid, graph_ids, outdir, num_samples=3):
-    """Publication-style representative low/medium/high SEA curve fits; PNG only."""
+
     print("\n--- 生成代表性曲线拟合图 / publication representative curves ---")
     img_dir = os.path.join(outdir, 'sample_comparisons')
     os.makedirs(img_dir, exist_ok=True)
@@ -1304,7 +1096,7 @@ def plot_selected_test_samples(true_curves, pred_curves, strain_grid, graph_ids,
         if k == 0:
             ax.legend(loc="lower right", fontsize=6.8, handlelength=1.45)
 
-        # individual panel
+
         fig_i, ax_i = plt.subplots(figsize=(2.25, 1.95), dpi=600)
         ax_i.plot(strain_grid, y_true, color=DARK_TEXT, linewidth=1.55, label="FEM")
         ax_i.plot(strain_grid, y_pred, color=PAPER_BLUE, linewidth=1.55, linestyle="--", label="GNN")
@@ -1345,7 +1137,7 @@ def run_experiment(args, experiment_name="single_run"):
     os.makedirs(args.outdir, exist_ok=True)
     csv_files = glob.glob(os.path.join(args.data_dir, '*.csv'))
     max_strains = [np.max(s) for s, _, _, _, _, _, _, _ in (read_csv_new(f) for f in csv_files) if s is not None and len(s) > 0]
-    # 防止空列表导致 max() 出错
+
     max_s = max(max_strains) if max_strains else 1.0
     strain_grid = np.linspace(0, max_s, args.L)
     ds = GraphCurveDataset(args.graphs_dir, args.data_dir, strain_grid)
@@ -1423,33 +1215,41 @@ def run_experiment(args, experiment_name="single_run"):
     if test_results:
         test_curves_true, test_curves_pred, _, _ = test_results
         test_ids = [ds.get(i).graph_id for i in test_idx]
-        true_maxs, pred_maxs = test_curves_true[:, 0, :].max(axis=1), test_curves_pred[:, 0, :].max(axis=1)
-        if len(true_maxs) > 1: test_r2 = r2_score(true_maxs, pred_maxs)
+        true_endpoints = curve_value_at_strain(test_curves_true[:, 0, :], strain_grid, 0.5)
+        pred_endpoints = curve_value_at_strain(test_curves_pred[:, 0, :], strain_grid, 0.5)
+        if len(true_endpoints) > 1: test_r2 = r2_score(true_endpoints, pred_endpoints)
 
         for i, gid in enumerate(test_ids):
             pd.DataFrame({'strain': strain_grid, "SEA(J/kg)_true": test_curves_true[i, 0, :], "SEA(J/kg)_pred": test_curves_pred[i, 0, :]}).to_csv(os.path.join(pred_curve_dir, f'{gid}.csv'), index=False)
 
-        if SHAP_AVAILABLE:
+        if test_ids:
             print("\n--- 正在为 SHAP 分析提取单晶格特征 ---")
             X_test_single_hex = []
             Y_test_single_hex = []
-            valid_feat_names = ['N_nodes', 'E_edges', 'Mean_Edge_Len', 'Std_Edge_Len', 'Sparsity']
+            shap_sample_ids = []
+            valid_feat_names = ['N_nodes', 'E_edges', 'Mean_Edge_Len', 'Std_Edge_Len', 'Sparsity', 'Orientation_fraction_0_60deg', 'Orientation_fraction_60_120deg']
 
             for i_enum, idx_ds in enumerate(test_idx):
                 gid = test_ids[i_enum]
                 json_path = os.path.join(args.graphs_dir, f"{gid}.json")
                 if os.path.exists(json_path):
-                    feats = get_single_hex_features_from_json(json_path)
+                    feats = get_seven_hex_features_from_json(json_path)
                     if feats is not None:
                         X_test_single_hex.append(feats)
                         Y_test_single_hex.append(test_curves_pred[i_enum, 0, L - 1])
+                        shap_sample_ids.append(gid)
                     else:
                         print(f"跳过 {gid} 的 SHAP 分析，因为未成功提取出完整单晶格。")
 
             if len(X_test_single_hex) > 0:
                 X_test_single_hex = np.array(X_test_single_hex)
                 Y_test_single_hex = np.array(Y_test_single_hex)
-                plot_shap_analysis(X_test_single_hex, Y_test_single_hex, valid_feat_names, args.outdir, title="Cell-level descriptor SHAP")
+                plot_shap_analysis(X_test_single_hex, Y_test_single_hex, valid_feat_names,
+                                   args.outdir, title="Seven-descriptor linear-proxy SHAP",
+                                   surrogate=getattr(args,"shap_surrogate","linear"),
+                                   sample_ids=shap_sample_ids,
+                                   fidelity_fraction=getattr(args,"shap_fidelity_fraction",0.20),
+                                   seed=args.seed,predictor_path=best_state_path)
             else:
                 print("未能提取出任何单晶格特征，SHAP 分析跳过。")
 
@@ -1461,7 +1261,9 @@ def run_experiment(args, experiment_name="single_run"):
         if int(args.run_explainer) == 1:
             run_gnnexplainer_on_test(model, wrapped_ds, ds, test_idx, strain_grid, args, device)
 
-    plot_training_history(pd.DataFrame(history), args.outdir)
+    history_df = pd.DataFrame(history)
+    history_df.to_csv(os.path.join(args.outdir, 'metrics.csv'), index=False, encoding='utf-8-sig')
+    plot_training_history(history_df, args.outdir)
     print(f"Finished: {experiment_name}. Best Val: {best_val:.3f}, Test R2: {test_r2:.2f}")
     return {
         'name': experiment_name, 'params': {k: getattr(args, k) for k in TUNING_GRID.keys()},
@@ -1512,6 +1314,9 @@ def parse_args():
     p.add_argument('--explain_target_strain', type=float, default=0.5)
     p.add_argument('--explainer_epochs', type=int, default=200)
     p.add_argument('--explainer_topk_edges', type=int, default=30)
+    p.add_argument('--shap_surrogate',default='linear',choices=['linear'])
+    p.add_argument('--shap_fidelity_fraction',type=float,default=0.20,
+                   help='Independent descriptor-surrogate holdout fraction; no GNN retraining needed for post-hoc use.')
     return p.parse_args()
 
 def main():

@@ -1,15 +1,13 @@
-﻿#!/usr/bin/env python3
-
 import os
 import json
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
-from networkx.readwrite import json_graph
 from stable_baselines3.common.callbacks import BaseCallback
 
 from lattice_state import LatticeState
+from hexagonal_generator import node_link_data
 
 PAPER_COLORS = {
     'primary': "#7C95E1",
@@ -279,7 +277,7 @@ class BestStructureTracker(BaseCallback):
             return
 
         G = lattice_state.to_networkx_graph()
-        data = json_graph.node_link_data(G)
+        data = node_link_data(G)
 
         for node in data['nodes']:
             x, y = node['id']
@@ -391,6 +389,13 @@ class BestStructureTracker(BaseCallback):
             json.dump(checkpoint, f, indent=2, ensure_ascii=False)
 
     def _on_training_end(self):
+
+        base_env = self._get_base_env()
+        evaluated_state = getattr(base_env, 'gnn_best_state', None)
+        evaluated_best = float(getattr(base_env, 'gnn_best_so_far_real', 0.0))
+        if evaluated_state is not None and evaluated_best > self.best_performance:
+            self._maybe_update_topk(evaluated_state, evaluated_best,
+                                    int(getattr(base_env, 'current_episode', self.episode_count)))
         if self.top_structures:
             self._save_topk_structures()
         else:

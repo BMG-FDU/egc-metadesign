@@ -1,0 +1,15 @@
+{
+  "seed": "42",
+  "method": "Hill Climbing",
+  "actual_gnn_calls": "100000",
+  "best_sea_raw": "817.8430786132812",
+  "best_call_index": "55970",
+  "n90_threshold": "814.9186340332031",
+  "n90": "55970.0",
+  "right_censored": "False",
+  "censor_call": "",
+  "tail_episode_best_mean_(0.9B,B]": "548.3011712505769",
+  "tail_episode_count": "694",
+  "device": "cpu",
+  "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460"
+}

@@ -1,0 +1,14 @@
+{
+  "topology_seed": 42,
+  "n": 1,
+  "filled_cells": 13,
+  "geometry_matches_original_controls": true,
+  "job": "xi100_dynamic_inc",
+  "solver": "Explicit",
+  "material_nu": 0.4999,
+  "endpoint_target_strain": 0.5,
+  "raw_final_strain": 0.4999945068359375,
+  "endpoint_handling": "linear interpolation or extrapolation over less than 1e-5 strain; integration recomputed consistently",
+  "reference": "original historical OFF; intermediate historical arrays unchanged",
+  "control_error_pct": 0.6187866894760141
+}

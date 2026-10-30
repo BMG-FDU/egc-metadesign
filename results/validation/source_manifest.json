@@ -1,0 +1,11 @@
+{
+  "sources": [
+    "D:\\小论文\\ijms一修\\11_回稿编写与核查\\20261018_回稿与代码核查\\跨家族100样本",
+    "D:\\小论文\\ijms一修\\03_图表与数据\\R2_5_扩展数值验证",
+    "D:\\WORK\\20261023\\R2_M5_低中性能新结构_扩展数值验证"
+  ],
+  "cross_family_samples": 300,
+  "expanded_numerical_samples": 73,
+  "expanded_plot_examples": 10,
+  "copied": "Saved structures, FEA responses, predictions and figure data; no new training or simulations."
+}

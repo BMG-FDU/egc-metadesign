@@ -1,0 +1,170 @@
+{
+  "arguments": {
+    "gnn_budget": 100000,
+    "max_steps": 60,
+    "gnn_model": "D:\\WORK\\20261009\\compare\\results\\best_model.pth",
+    "methods": [
+      "hill"
+    ],
+    "ppo_variants": [
+      "loop_link_node"
+    ],
+    "seeds": [
+      48
+    ],
+    "n90_threshold": null,
+    "old_model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+    "old_model": null,
+    "save_dir": "D:\\小论文\\compare_revision\\official_runs\\20261011_R1_9_other3_seeds19_37_42_48_57_retry2\\workers\\seed_48_hill"
+  },
+  "command": [
+    "D:\\小论文\\compare_revision\\official_runs\\20261011_R1_9_other3_seeds19_37_42_48_57_retry2\\code_snapshot\\compare_all_methods.py",
+    "--gnn_model",
+    "D:\\WORK\\20261009\\compare\\results\\best_model.pth",
+    "--old_model_sha256",
+    "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+    "--gnn_budget",
+    "100000",
+    "--seeds",
+    "48",
+    "--methods",
+    "hill",
+    "--ppo_variants",
+    "loop_link_node",
+    "--max_steps",
+    "60",
+    "--save_dir",
+    "D:\\小论文\\compare_revision\\official_runs\\20261011_R1_9_other3_seeds19_37_42_48_57_retry2\\workers\\seed_48_hill"
+  ],
+  "model": {
+    "path": "D:\\WORK\\20261009\\compare\\results\\best_model.pth",
+    "sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+    "expected_old_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+    "old_model_path": null,
+    "old_model_sha256": null,
+    "historical_hash_verified": true,
+    "sha256_after_runs": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460"
+  },
+  "ppo_config": {
+    "ACTION_ORDER": "loop_link_node",
+    "BATCH_SIZE": 512,
+    "CLIP_RANGE": 0.2,
+    "CONSECUTIVE_SUCCESS_REQUIRED": 3,
+    "COOLDOWN_EPISODES": 60,
+    "EDGE_LENGTH": 1.0,
+    "ENT_COEF": 0.05,
+    "EVAL_WINDOW": 50,
+    "GAE_LAMBDA": 0.95,
+    "GAMMA": 0.98,
+    "GNN_MODEL_PATH": "results/best_model.pth",
+    "LEARNING_RATE": 0.0003,
+    "MAX_GRAD_NORM": 0.5,
+    "MAX_STEPS_PER_EPISODE": 60,
+    "MIN_EPISODES_PER_STAGE": 400,
+    "NUM_POINTS_PER_EDGE": 10,
+    "N_EPOCHS": 15,
+    "N_STEPS": 2048,
+    "PI_ARCH": [
+      512,
+      512,
+      256
+    ],
+    "SAVE_CHECKPOINTS": true,
+    "SAVE_DIR": "ppo_results",
+    "SAVE_FREQ": 30000,
+    "SEED": 42,
+    "STABILITY_THRESHOLD": 0.07,
+    "STAGE1_THRESHOLD": 0.5525,
+    "STAGE2_THRESHOLD": 0.595,
+    "STAGE3_THRESHOLD": 0.7225,
+    "TOTAL_TIMESTEPS": 150000,
+    "USE_CURRICULUM": true,
+    "USE_LR_SCHEDULE": true,
+    "USE_POTENTIAL_SHAPING": true,
+    "VF_ARCH": [
+      512,
+      512,
+      256
+    ],
+    "VF_COEF": 1.0
+  },
+  "env_config": {
+    "ACTION_UNLOCK_EPISODES": 80,
+    "CURRICULUM_ENABLED": true,
+    "EDGE_LENGTH": 1.0,
+    "EXTRA_DIM": 32,
+    "INITIAL_STAGE": 1,
+    "LINK_ACTIONS_PER_LOOP": 15,
+    "LINK_ACTIONS_TOTAL": 30,
+    "MAX_ENERGY": 1000,
+    "MAX_STEPS": 60,
+    "NUM_POINTS_PER_EDGE": 10,
+    "STAGE1_ACTIONS": 2,
+    "STAGE1_BASE_STEPS": 10,
+    "STAGE1_MAX_STEPS": 10,
+    "STAGE2_ACTIONS_LOOP_LINK_NODE": 32,
+    "STAGE2_ACTIONS_LOOP_NODE": 122,
+    "STAGE2_ACTIONS_LOOP_NODE_LINK": 362,
+    "STAGE2_BASE_STEPS": 10,
+    "STAGE2_MAX_STEPS": 35,
+    "STAGE3_ACTIONS": 152,
+    "STAGE3_BASE_STEPS": 35,
+    "STAGE3_MAX_STEPS": 60,
+    "STEPS_INCREASE_INTERVAL": 15,
+    "USE_POTENTIAL_SHAPING": true
+  },
+  "reward_config": {
+    "DELTA_MULTIPLIER_LOOP": 20.0,
+    "DELTA_MULTIPLIER_OTHER": 12.0,
+    "EXPLORATION_REWARD": 0.3,
+    "HIGH_PERF_MULTIPLIER": 3.0,
+    "HIGH_PERF_THRESHOLD": 0.8,
+    "INVALID_ACTION_PENALTY": -0.5,
+    "LOOP_BONUS_MULTIPLIER": 10.0,
+    "LOOP_BONUS_THRESHOLD": 0.02,
+    "PERF_REWARD_COEF": 0.3,
+    "POTENTIAL_COEF": 3.0,
+    "REWARD_CLIP_MAX": 5.0,
+    "REWARD_CLIP_MIN": -3.0,
+    "UNAVAILABLE_ACTION_PENALTY": -1.0
+  },
+  "definitions": {
+    "tail_mean": "Mean episode-best raw SEA for complete episode end calls in (0.9 B, B]",
+    "incomplete_episode": "Excluded from episode means; all evaluations retained for best/N90",
+    "n90": "First actual evaluation reaching one common raw SEA threshold; null when unreached",
+    "n90_default": "0.9 * pooled raw best across all methods and seeds",
+    "std": "Population standard deviation (ddof=0); N90 summaries condition on reaching",
+    "ranking": "Uncapped raw SEA, including partial episodes and evaluated candidates",
+    "objective": "Maximum predicted curve value (existing objective preserved)",
+    "reward": "Existing clipped normalized performance/reward retained",
+    "baseline_actions": {
+      "greedy_sampling": 36,
+      "hill_random_sampling": 152,
+      "decoder": "Existing 36 local link/node actions"
+    }
+  },
+  "python": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "packages": {
+    "numpy": "2.3.4",
+    "pandas": "3.0.6",
+    "torch": "2.14.1+cpu",
+    "torch-geometric": "2.8.0.post1",
+    "gymnasium": "1.4.0",
+    "stable-baselines3": "2.9.0",
+    "sb3-contrib": "2.9.0",
+    "networkx": "3.5"
+  },
+  "source_sha256": {
+    "compare_all_methods.py": "c68de0d06eaeb4335ecc77e23d566542ca8107ecbd85af8eaed6291ecc20bf42",
+    "comparison_metrics.py": "66534cebfa2cf8c99c195dee99bc1613472abbb4e65ab7b8c3fa6cfafb367e30",
+    "train_ppo.py": "7d08272a15239bbef0e14929e1771bdd9cca58578d16b3f992ec5f558d29cfad",
+    "lattice_env.py": "5faed60087482dc542a84b891cbd8df30b8a1da920eb546cbf7817181bfb5055",
+    "lattice_state.py": "b9b738c5a8695e055def22bf6cd0697f43dee4413bca28d90153d48a6705c82d",
+    "GNN.py": "b0372bb6e803ed26444edac372d7597400f5a1b403284a23f2222c8ea65c2829",
+    "hexagonal_loop.py": "77d37d004169134731aab9d1119e6b697f7ce19ebbc73ab01057dbb3236d4029",
+    "best_structure_tracker.py": "f053a092e2dc1df0e12f8d536e5a804d3e14321dc1b0c795067cf00aa1c1a997"
+  },
+  "resolved_n90_threshold": 778.8928161621094,
+  "resolved_n90_reference": 865.4364624023438
+}

@@ -1,0 +1,19 @@
+{
+  "batch_size": 8,
+  "ppo_rerun": false,
+  "loss": "same mean-reduced MSE for train and validation; curve denominator C_curve*L+C_scalar, scale denominator C_curve+C_scalar",
+  "hidden": 256,
+  "source_sha256": "720A1090AE04023F451F5D15EC66C92F3E81B21D1AA9804B5F1EB6036ABA6BE1",
+  "num_layers": 8,
+  "dropout": 0.2,
+  "learning_rate": 0.001,
+  "seed": 42,
+  "decoder_type": "cnn",
+  "use_edge_feat": true,
+  "use_global_feat": true,
+  "train_test_validation": "70/15/15, sklearn two train_test_split, random_state=42",
+  "epochs": 180,
+  "pooling_type": "dual",
+  "source": "D:\\小论文\\代码汇总\\GNN.py",
+  "use_denom_head": true
+}

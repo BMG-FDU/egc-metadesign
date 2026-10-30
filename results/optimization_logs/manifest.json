@@ -1,0 +1,545 @@
+{
+  "source_directory": "D:\\WORK\\20261012\\四算法五组原始数据",
+  "budget": 100000,
+  "threshold_sea_J_kg": 750,
+  "tail_window": "90000 < episode_end_call <= 100000",
+  "reported_tail_statistic": "arithmetic mean of episode-best SEA",
+  "aggregate_sd": "sample standard deviation (ddof=1)",
+  "runs": [
+    {
+      "method": "PPO",
+      "seed": 19,
+      "path": "PPO/seed_19",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_19\\evaluations.csv",
+          "sha256": "f3a11f548f615d9bf386e692ff8d989a825579b7d44c5d3054eccd8b6459a3d4"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_19\\episode_ends.csv",
+          "sha256": "87c95ea67f8bb39ae4f8fa0cbce1debbc98d60ca7e8229cc51287b75db66fe69"
+        },
+        {
+          "name": "summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_19\\summary.json",
+          "sha256": "2ad67668a5ac506d66cf59051e417a9403ce484424ad6ba25bcdf6bf9feff2b1"
+        }
+      ]
+    },
+    {
+      "method": "PPO",
+      "seed": 37,
+      "path": "PPO/seed_37",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_37\\evaluations.csv",
+          "sha256": "f9ad5871ee8c30156cf2365115fdac84061b23ceb70e8875bfd95cc055d87070"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_37\\episode_ends.csv",
+          "sha256": "dcde8cc6fc2a64b9d93f63a3c33cfbbe3690d58645c713ac50a74c51521c7d41"
+        },
+        {
+          "name": "summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_37\\summary.json",
+          "sha256": "9d0e9ea9c4ee1f48a1859cc78ba586f5a9565f9cfb86540c58903f13c40de6bd"
+        }
+      ]
+    },
+    {
+      "method": "PPO",
+      "seed": 42,
+      "path": "PPO/seed_42",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_42\\evaluations.csv",
+          "sha256": "7ba9478ee861a71677716266af33538af9f10b961f0f24416846d71ce61a3675"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_42\\episode_ends.csv",
+          "sha256": "4a9963773049a83a53a98e71ab481dcfd81a2c310ae7dab96b699977cd9aacb8"
+        },
+        {
+          "name": "summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_42\\summary.json",
+          "sha256": "391f3cf5e2ae2da3c11b0924c26a132229dc1d792922688d130d940cbd26089e"
+        }
+      ]
+    },
+    {
+      "method": "PPO",
+      "seed": 48,
+      "path": "PPO/seed_48",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_48\\evaluations.csv",
+          "sha256": "6338e36fdcc0b0f138aa138e26fc8ba659727ee175af4be221e33ed4a728ceb8"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_48\\episode_ends.csv",
+          "sha256": "e82b4f637a9f6e99ecb5bc55b8a47ef739cc4d7a6dd935877adbb60cc1e89be8"
+        },
+        {
+          "name": "summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_48\\summary.json",
+          "sha256": "c60db7c6bb1e89e9d994486e7da390632db59573a7828a166f7b115a05529d94"
+        }
+      ]
+    },
+    {
+      "method": "PPO",
+      "seed": 57,
+      "path": "PPO/seed_57",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_57\\evaluations.csv",
+          "sha256": "58958ac2d7538120803fddbea3ffec6542672ba48e83ac09a4821f4eba4883a2"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_57\\episode_ends.csv",
+          "sha256": "75c4bdf96526ec1b544202c2e64e40e7078ab27fda4096350c5fea21b860060c"
+        },
+        {
+          "name": "summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\PPO\\seed_57\\summary.json",
+          "sha256": "ef40fc811636b1981205679e466c365928b71b244e0d652f8f0d2239034ed58c"
+        }
+      ]
+    },
+    {
+      "method": "Greedy",
+      "seed": 19,
+      "path": "Greedy/seed_19",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_19\\evaluations.csv",
+          "sha256": "f9dcf786b731f9804b20b6713b0f2db8ff7c5d3f6cbc1a028224d4b57fdceca1"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_19\\episode_ends.csv",
+          "sha256": "a0211294360d21d682b77b8e99376a38c88f6e49e7a0257fa30b2a4496a13054"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_19\\verified_summary.json",
+          "sha256": "685126768792047ae04b9ed62ad0c52f653f8748e7241483d20eaafdbb598b9c"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_19\\run_parameters.json",
+          "sha256": "851dc9d8efbf61dec71c4c8931f2e607919901b7ac3ce09337a21e353a03f442"
+        }
+      ]
+    },
+    {
+      "method": "Greedy",
+      "seed": 37,
+      "path": "Greedy/seed_37",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_37\\evaluations.csv",
+          "sha256": "c5d8d5c2a13bf8d684e4a11bc67bbeb1f200063fdf31a98da14d8f1b77e85a81"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_37\\episode_ends.csv",
+          "sha256": "53cdcb685af51b9739611fe6c57bc448c95bdcb7ad2538fd8ff12b1d64abd7e9"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_37\\verified_summary.json",
+          "sha256": "241e3dddb5e8d18cc1af708ed954da63a4843f126f5290cd08967b1762b2a7d1"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_37\\run_parameters.json",
+          "sha256": "f35d6c7414129e7ff976c79dcb69d0ecfb34b8c658b0605df0430b59d22fbe03"
+        }
+      ]
+    },
+    {
+      "method": "Greedy",
+      "seed": 42,
+      "path": "Greedy/seed_42",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_42\\evaluations.csv",
+          "sha256": "84633d0f5f193e8974aea0ef50b399f7ad78c2ae1cbbebc738d57a30f800d0aa"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_42\\episode_ends.csv",
+          "sha256": "a83e97bee10103493a0be9d85c49e8185a0524e666135b5812b4071e622702c4"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_42\\verified_summary.json",
+          "sha256": "547fd7256332f362e7e6417cf1d5c1d3bdbda505e7959fc6e8b0759cad9afcc5"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_42\\run_parameters.json",
+          "sha256": "67145b786325b5c3f865a60daf34205b1a4b0f52f21bc4a24f07d51a7f3b73f8"
+        }
+      ]
+    },
+    {
+      "method": "Greedy",
+      "seed": 48,
+      "path": "Greedy/seed_48",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_48\\evaluations.csv",
+          "sha256": "b4d30b9ac48058c89e13930ade684ce7ebf4c00d3bca1f23c05dbb6bb4d8bf9d"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_48\\episode_ends.csv",
+          "sha256": "3841ff62121cbd590679b685dbdf3dd22000e0619f2c511e93a6badb536bec2a"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_48\\verified_summary.json",
+          "sha256": "9dc7773d3b62ff4f15604564e66b2597f3e0224d8b1ae456e9a207aa899c3b38"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_48\\run_parameters.json",
+          "sha256": "8c18a901bb0293288596e2490b92e174aaa034fb3f48b555482c1672f2af7409"
+        }
+      ]
+    },
+    {
+      "method": "Greedy",
+      "seed": 57,
+      "path": "Greedy/seed_57",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_57\\evaluations.csv",
+          "sha256": "e0c2f8e65c8bdd7164c6e27b8d9f66aeaaee22ff3ca3e6389855721d88a76dfd"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_57\\episode_ends.csv",
+          "sha256": "6685e5138a88372ee951884cf277a6772b4b5b0151916d14a7670ea079333da4"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_57\\verified_summary.json",
+          "sha256": "a1c880f54bbc7d4a401918fb007a491dcc22c328b3783335756db2470c10a569"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Greedy\\seed_57\\run_parameters.json",
+          "sha256": "4323960c02b0b4186c89141ae3e075609406bb790c417c46f0153ab2194f8aab"
+        }
+      ]
+    },
+    {
+      "method": "Random",
+      "seed": 19,
+      "path": "Random/seed_19",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_19\\evaluations.csv",
+          "sha256": "ba2bd73c04d608b090cce96d479f31b4ba3aaffb59ba4354c99e552cc2215be6"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_19\\episode_ends.csv",
+          "sha256": "b4c5268f0a275af7c1c7aec6a7fa3e42755f5c39cd34549df5070a78522d53d3"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_19\\verified_summary.json",
+          "sha256": "0ce816ed500b6d95da287628b5173b0b2f1bc3ddcffe97266c15a58e59e709dc"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_19\\run_parameters.json",
+          "sha256": "df86bd35f81dd3729538150d5366a65a62fa5c1d09c8c912744ecf4ab5455161"
+        }
+      ]
+    },
+    {
+      "method": "Random",
+      "seed": 37,
+      "path": "Random/seed_37",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_37\\evaluations.csv",
+          "sha256": "522062861e002e97a6e61a426a660ef6b79fed1ee6e73c8f4307607c6bfc9ca3"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_37\\episode_ends.csv",
+          "sha256": "070a11266ab93c00a6a86dd8d85df7efdeba5ef90195a4e9c633630f1ec4b4f4"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_37\\verified_summary.json",
+          "sha256": "01e453508d12dd55cb3ca28eecb4b819c02a47eee10eb146a1f46f94733dd7a5"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_37\\run_parameters.json",
+          "sha256": "b0a4df71d07af9e4d35629145614551b2dd98b3579bc1050f991aa7b5d1eee1d"
+        }
+      ]
+    },
+    {
+      "method": "Random",
+      "seed": 42,
+      "path": "Random/seed_42",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_42\\evaluations.csv",
+          "sha256": "efc104bcea41cc04ab49763c62e711965d222f84aaf84440560d45b19c39cf4b"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_42\\episode_ends.csv",
+          "sha256": "c379d6d6be51e59d8fb1486bacd8c8cb9d3b9e02c368febac57faffc5517d8c3"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_42\\verified_summary.json",
+          "sha256": "4316960e07a3a9a92327bc635eebd88292c52f468b333c845002bb8145121fbf"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_42\\run_parameters.json",
+          "sha256": "d134ffbab850031a5d6ba7f7f3d7144ebaca05dd61a83243dbc3effd125f7328"
+        }
+      ]
+    },
+    {
+      "method": "Random",
+      "seed": 48,
+      "path": "Random/seed_48",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_48\\evaluations.csv",
+          "sha256": "105a646e48827711fbade5083785c084f72c3c829c95f377385ceea9b20d6703"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_48\\episode_ends.csv",
+          "sha256": "b99d0d8bb61eb38c0fbd36d1f881e4678bbd83b59ce60eed50d0cddf3e5d12c9"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_48\\verified_summary.json",
+          "sha256": "9098674f822463d3dd6e540823e66ba4bcdd0d76da97f63c9cd8af26c76d2651"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_48\\run_parameters.json",
+          "sha256": "d7b9162cc11f78214e8c80eaebf5661762832f405ee9400892200d5f3792d6dc"
+        }
+      ]
+    },
+    {
+      "method": "Random",
+      "seed": 57,
+      "path": "Random/seed_57",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_57\\evaluations.csv",
+          "sha256": "4135c442f1080011cafde3afbe0131479d4753abeefc0b7b82b2511739b17734"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_57\\episode_ends.csv",
+          "sha256": "9773926891f039708a86bbd90d19b0d1ec2dc9d4d646920be1ec3ce5d4df2a71"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_57\\verified_summary.json",
+          "sha256": "2422115045c88646cf658ba0c9fdb6ae6befae543410c2032baf1fe82a0b1029"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Random\\seed_57\\run_parameters.json",
+          "sha256": "f36d147e2ee7d4f1e55b852f805fcf3e6692397fad6c40fa611c2fd1fd3b194d"
+        }
+      ]
+    },
+    {
+      "method": "Hill Climbing",
+      "seed": 19,
+      "path": "Hill_Climbing/seed_19",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_19\\evaluations.csv",
+          "sha256": "4cbcada0f58779e9acf2bc764a6d96a5d51f111837328bf795f063ea42ec49ee"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_19\\episode_ends.csv",
+          "sha256": "98cd1cd9e88cd3bd0fc1e2954dce58ca2b632ca7d19619e27b4eae2cc28e4b1d"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_19\\verified_summary.json",
+          "sha256": "31aab9edce869475d630bdd5e2f98acb644f55c4502521a7f0ff7addf13bbe9c"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_19\\run_parameters.json",
+          "sha256": "64cd652bcb7cb2fd4d09c393733e8ad092bffbcaf2e12732193a74a53f6634cf"
+        }
+      ]
+    },
+    {
+      "method": "Hill Climbing",
+      "seed": 37,
+      "path": "Hill_Climbing/seed_37",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_37\\evaluations.csv",
+          "sha256": "041b0f78550a1c2fe8fe222c2d61e96dc421d0d027746a6377dc4dbc0119d1bf"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_37\\episode_ends.csv",
+          "sha256": "4d24befd49c99a11c5bea33f1a83ab79782a44bcd3276f8073e8817027ef8c24"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_37\\verified_summary.json",
+          "sha256": "425824d19d31702acbbb9b3a9c56f2a4541727e722787b30962a689ec3193f36"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_37\\run_parameters.json",
+          "sha256": "05096ee620a3c8451e7c03d8f3a80e2f95a7d97720855ef3ac04b6b8fde3c6e1"
+        }
+      ]
+    },
+    {
+      "method": "Hill Climbing",
+      "seed": 42,
+      "path": "Hill_Climbing/seed_42",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_42\\evaluations.csv",
+          "sha256": "078916b33464eaeea40b2cda86116ba087cd8a5aeb42f422a314e4620b314e56"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_42\\episode_ends.csv",
+          "sha256": "9aee55c0b43f0afda57b2d57dba2a183bf7596317784d343975c66a4c5bf16b3"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_42\\verified_summary.json",
+          "sha256": "6b3aa6971bba92d77c5d6b0f48e4384d98749ae4701ee916c24fb8034767c9d3"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_42\\run_parameters.json",
+          "sha256": "b18be532f7c476fa3229dd6dfe9604a15c2bb8c13647fd786e1af6dda3d93a43"
+        }
+      ]
+    },
+    {
+      "method": "Hill Climbing",
+      "seed": 48,
+      "path": "Hill_Climbing/seed_48",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_48\\evaluations.csv",
+          "sha256": "7ac9224c7599a69a2b04af938032c651705f8fdb888953140866c60b60f5d8e4"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_48\\episode_ends.csv",
+          "sha256": "884b23467c076e4ab1ee39863c52ef4553b995e0c76bc6b8f7e8a5fdf5c1dd00"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_48\\verified_summary.json",
+          "sha256": "ae57a0b2023fcce7d8fbe683c82100d68563ae3113ada76013000bd2bfecac98"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_48\\run_parameters.json",
+          "sha256": "fdf379a9927837801000bf43c317d79a728f87e2d815c61857811aed001d5ac0"
+        }
+      ]
+    },
+    {
+      "method": "Hill Climbing",
+      "seed": 57,
+      "path": "Hill_Climbing/seed_57",
+      "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "files": [
+        {
+          "name": "evaluations.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_57\\evaluations.csv",
+          "sha256": "b855c6ca46e04e5ccf02fcd93a466002c824c0c7dcc4b7562db81923e2a1976b"
+        },
+        {
+          "name": "episode_ends.csv",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_57\\episode_ends.csv",
+          "sha256": "d7707dd825e09f6b9871de1ba06dd2ad83eb0e31920bfa82e038de9de0428525"
+        },
+        {
+          "name": "verified_summary.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_57\\verified_summary.json",
+          "sha256": "ead377df96e55624625c6fab22a3c93c4426b9046e3a0af87023f8535265f94e"
+        },
+        {
+          "name": "run_parameters.json",
+          "source": "D:\\WORK\\20261012\\四算法五组原始数据\\Hill_Climbing\\seed_57\\run_parameters.json",
+          "sha256": "d366e6e40d45c6b82d9e82763bcef413e7d1fb8e753d2980386ce1899e3c3332"
+        }
+      ]
+    }
+  ]
+}

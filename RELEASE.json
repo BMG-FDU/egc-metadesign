@@ -1,0 +1,11 @@
+{
+  "version": "IJMS-R1-20261029",
+  "repository": "https://github.com/BMG-FDU/egc-metadesign",
+  "file_manifest": "FILE_MANIFEST_SHA256.csv",
+  "excluded_directories": [
+    "__pycache__",
+    ".git",
+    "outputs"
+  ],
+  "scope": "Local revision package; remote upload is performed separately."
+}

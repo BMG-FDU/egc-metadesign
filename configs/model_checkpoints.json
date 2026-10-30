@@ -1,0 +1,19 @@
+{
+  "models": [
+    {
+      "name": "Historical GNN predictor",
+      "checkpoint": "results/best_model.pth",
+      "sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+      "use_global_feat": false,
+      "source_checkpoint": "D:\\WORK\\20260507\\GNN_FULL\\results_full_model_1\\best_model.pth"
+    },
+    {
+      "name": "Retrained Full model",
+      "checkpoint": "results/retrained_full/best_model.pth",
+      "endpoint_R2": 0.9774430055495309,
+      "sha256": "63b0c20b734ea9ba2581b89ca231e539a1ff3767dab3d2a881e817174227e5fb",
+      "records": "results/retraining_records/",
+      "figure": "Fig. 5b"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "split_counts": {
+    "train": 4129,
+    "validation": 885,
+    "test": 885
+  },
+  "exact_hash_cross_split_groups": {
+    "graph_sha256": [],
+    "label_sha256": []
+  },
+  "translation_centered_geometry_connectivity_signature_cross_split_groups": {
+    "6": [],
+    "5": []
+  },
+  "canonical_scope": "Centered coordinates, cell_type and undirected connectivity; node IDs, node order, edge order and translation ignored; rounding at 1e-6 and 1e-5."
+}

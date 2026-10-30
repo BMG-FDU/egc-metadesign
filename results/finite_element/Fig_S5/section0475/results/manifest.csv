@@ -1,0 +1,4 @@
+﻿group,sample,job,element,height_mm,mass_kg,section_nu,material_nu,odb_path,run
+T1,P1,P1_section0475,B31,100.0,0.005175278948180725,0.475,0.475,jobs/P1_section0475.odb,True
+T1,P2,P2_section0475,B31,100.0,0.006336102807830359,0.475,0.475,jobs/P2_section0475.odb,True
+T1,P3,P3_section0475,B31,100.0,0.005586856642363684,0.475,0.475,jobs/P3_section0475.odb,True

@@ -1,0 +1,71 @@
+{
+  "demo_status": "RESEARCH_DEMO_NOT_MACHINE_READY",
+  "source": {
+    "representative_seed": 1,
+    "routes": [
+      {"method": "Euler Momentum closed", "slug": "euler_momentum_closed", "color": "#2F5597"},
+      {"method": "Direct Momentum closed", "slug": "direct_momentum_closed", "color": "#A85A24"}
+    ],
+    "routes_snapshot": "inputs/representative_routes.json.gz",
+    "operation_trace_snapshot": "inputs/representative_operation_trace.csv",
+    "metrics_snapshot": "inputs/route_metrics_long.csv",
+    "physical_graph_generator": "inputs/source_snapshot/generator/unified_hexagonal_generator.py",
+    "do_not_reseek_or_reorder": true
+  },
+  "geometry": {
+    "coordinate_units": "mm (already normalized by source analysis)",
+    "array_height_mm": 100.0,
+    "source_bbox_mm": [-19.245009020049125, -33.3333332691833, 134.7150631403439, 66.6666667308167],
+    "translation_only": true,
+    "translation_xy_mm": [39.245009020049125, 53.3333332691833],
+    "target_lower_left_xy_mm": [20.0, 20.0],
+    "scale": 1.0,
+    "rotation_deg": 0.0,
+    "mirror": false,
+    "output_bbox_mm": [20.0, 20.0, 173.960072160393, 120.0],
+    "preview_build_volume_mm": [256.0, 256.0, 256.0],
+    "build_volume_is_demonstration_only": true
+  },
+  "process": {
+    "layer_count": 1,
+    "layer_height_mm": 0.2,
+    "z_mm": 0.2,
+    "nozzle_diameter_mm": 0.4,
+    "filament_diameter_mm": 1.75,
+    "line_width_mm": 0.4,
+    "extrusion_multiplier": 1.0,
+    "print_speed_mm_s": 30.0,
+    "travel_speed_mm_s": 60.0,
+    "xyz_units_command": "G21",
+    "xyz_position_mode": "G90",
+    "e_mode_command": "M83",
+    "e_mode": "relative",
+    "retraction_enabled": false,
+    "material": null,
+    "nozzle_temperature_c": null,
+    "bed_temperature_c": null,
+    "machine": null,
+    "firmware": null,
+    "startup_commands": null,
+    "shutdown_commands": null,
+    "machine_ready": false,
+    "extrusion_model": {
+      "bead_cross_section_approximation": "rectangular",
+      "volume_mm3": "deposited_length_mm * line_width_mm * layer_height_mm",
+      "filament_e_delta_mm": "volume_mm3 / (pi * (filament_diameter_mm / 2)^2) * extrusion_multiplier"
+    }
+  },
+  "display": {
+    "deposit_style": "solid line",
+    "travel_style": "dashed line",
+    "excerpt_highlight": "#F2C14E",
+    "common_equal_aspect": true,
+    "colors_reference": "source_confirmed_figure_route_method_comparison.png"
+  },
+  "validation_tolerances": {
+    "source_coordinate_mm": 1e-8,
+    "gcode_xy_mm": 0.000002,
+    "length_mm": 0.02,
+    "e_total_mm": 0.0001
+  }
+}

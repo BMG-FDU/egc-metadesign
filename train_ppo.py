@@ -1,5 +1,3 @@
-﻿#!/usr/bin/env python3
-
 import matplotlib
 matplotlib.use('Agg')
 
@@ -52,9 +50,9 @@ class Config:
     USE_CURRICULUM = True
     ACTION_ORDER = 'loop_link_node'
 
-    STAGE1_THRESHOLD = 0.65
-    STAGE2_THRESHOLD = 0.70
-    STAGE3_THRESHOLD = 0.85
+    STAGE1_THRESHOLD = 0.5525
+    STAGE2_THRESHOLD = 0.595
+    STAGE3_THRESHOLD = 0.7225
     MIN_EPISODES_PER_STAGE = 400
     EVAL_WINDOW = 50
     STABILITY_THRESHOLD = 0.07
@@ -211,6 +209,9 @@ class ComparePerformanceTracker(BaseCallback):
         self.global_best = 0.0
         self.global_best_history = []
         self.gnn_calls_history = []
+        self.curriculum_stage_history = []
+        self.available_actions_history = []
+        self.effective_steps_history = []
 
         self.best_lattice_state = None
         self.best_gnn_calls = 0
@@ -228,9 +229,13 @@ class ComparePerformanceTracker(BaseCallback):
             self.episode_best.append(perf_real)
 
             base_env = self._get_base_env()
-            calls = base_env.get_gnn_forward_calls() if hasattr(base_env, 'get_gnn_forward_calls') else 0
+
+            calls = info.get('gnn_forward_calls', base_env.get_gnn_forward_calls())
             calls = int(calls)
             self.gnn_calls_history.append(calls)
+            self.curriculum_stage_history.append(int(info.get('curriculum_stage', 3)))
+            self.available_actions_history.append(int(info.get('available_actions', 0)))
+            self.effective_steps_history.append(int(info.get('effective_max_steps', 0)))
 
             if perf_real > self.global_best:
                 self.global_best = perf_real
@@ -279,7 +284,7 @@ class CurriculumCallback(BaseCallback):
         self.cooldown_remaining = 0
         self.consecutive_success_count = 0
 
-        # only for printing changes
+
         self.last_effective_steps = 10
         self.last_available_actions = 2
 
@@ -697,14 +702,21 @@ def run_ppo_compare(
     max_steps: int = None,
     device: str = 'cpu',
     verbose_curriculum: int = 1,
-    show_gnn_progress: bool = True,   
-    pbar_leave: bool = True,          
+    show_gnn_progress: bool = True,
+    pbar_leave: bool = True,
     seed: int = None,
+    action_curriculum: bool = None,
+    step_curriculum: bool = None,
 ) -> dict:
     cfg = Config()
     if seed is None:
         seed = int(cfg.SEED)
     seed = int(seed)
+    if action_curriculum is None:
+        action_curriculum = bool(use_curriculum)
+    if step_curriculum is None:
+        step_curriculum = bool(use_curriculum)
+    any_curriculum = bool(action_curriculum or step_curriculum)
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
@@ -728,14 +740,17 @@ def run_ppo_compare(
         edge_length=cfg.EDGE_LENGTH,
         num_points_per_edge=cfg.NUM_POINTS_PER_EDGE,
         max_steps=max_steps,
-        curriculum_enabled=use_curriculum,
-        curriculum_stage=1 if use_curriculum else 3,
+        curriculum_enabled=any_curriculum,
+        curriculum_stage=1 if any_curriculum else 3,
+        action_curriculum_enabled=action_curriculum,
+        step_curriculum_enabled=step_curriculum,
         use_potential_shaping=cfg.USE_POTENTIAL_SHAPING,
         action_order=action_order,
         gnn_budget=int(gnn_budget),
         verbose=False
     )
     base_env.reset_gnn_counter(budget=int(gnn_budget), clear_cache=False)
+    base_env.run_seed = seed
 
     env = ActionMasker(base_env, get_action_masks)
     env = Monitor(env)
@@ -777,7 +792,7 @@ def run_ppo_compare(
 
     callbacks = [tracker]
 
-    if use_curriculum:
+    if any_curriculum:
         callbacks.append(CurriculumCallback(
             stage_thresholds=[cfg.STAGE1_THRESHOLD, cfg.STAGE2_THRESHOLD, cfg.STAGE3_THRESHOLD],
             min_episodes_per_stage=cfg.MIN_EPISODES_PER_STAGE,
@@ -799,23 +814,31 @@ def run_ppo_compare(
     model.learn(total_timesteps=total_timesteps, callback=callbacks, progress_bar=False)
     elapsed = time.time() - t0
 
-    actual_gnn_calls = tracker.gnn_calls_history[-1] if tracker.gnn_calls_history else 0
+    actual_gnn_calls = base_env.get_gnn_forward_calls()
 
     return {
         'method': method_name,
         'episode_perfs': tracker.episode_best,
         'global_best_history': tracker.global_best_history,
-        'best_performance': tracker.global_best,
+        'best_performance': float(base_env.gnn_best_so_far_real),
         'num_episodes': len(tracker.episode_best),
         'elapsed_time': elapsed,
         'gnn_calls': int(actual_gnn_calls),
         'gnn_budget': int(gnn_budget),
         'gnn_calls_history': tracker.gnn_calls_history,
-        'use_curriculum': use_curriculum,
+        'gnn_evaluation_history': list(base_env.gnn_evaluation_history),
+        'curriculum_stage_history': tracker.curriculum_stage_history,
+        'available_actions_history': tracker.available_actions_history,
+        'effective_steps_history': tracker.effective_steps_history,
+        'use_curriculum': any_curriculum,
+        'action_curriculum': bool(action_curriculum),
+        'step_curriculum': bool(step_curriculum),
         'action_order': action_order,
         'seed': seed,
-        'best_lattice_state': tracker.best_lattice_state,
-        'best_gnn_calls': int(tracker.best_gnn_calls)
+        'best_lattice_state': base_env.gnn_best_state.clone() if base_env.gnn_best_state is not None else None,
+        'best_gnn_calls': int(base_env.gnn_best_call),
+        'predictor_sha256': base_env.predictor_sha256,
+        'predictor_use_global_feat': base_env.predictor_use_global_feat
     }
 
 

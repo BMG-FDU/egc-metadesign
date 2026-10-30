@@ -1,0 +1,15 @@
+{
+  "seed": "37",
+  "method": "Random",
+  "actual_gnn_calls": "100000",
+  "best_sea_raw": "822.2764892578125",
+  "best_call_index": "6113",
+  "n90_threshold": "821.9070373535156",
+  "n90": "6113.0",
+  "right_censored": "False",
+  "censor_call": "",
+  "tail_episode_best_mean_(0.9B,B]": "504.603036033733",
+  "tail_episode_count": "669",
+  "device": "cpu",
+  "model_sha256": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460"
+}

@@ -1,0 +1,15 @@
+{
+  "checkpoint_file": "results/retrained_full/best_model.pth",
+  "checkpoint_sha256": "63b0c20b734ea9ba2581b89ca231e539a1ff3767dab3d2a881e817174227e5fb",
+  "model_role": "Retrained Full model for the corrected training/validation-loss comparison (Fig. 5b; R1-8)",
+  "best_epoch": 178,
+  "test_metrics": {
+    "n_graphs": 885,
+    "full_curve_MAE_J_per_kg": 3.499291528728004,
+    "full_curve_RMSE_J_per_kg": 5.790787943249688,
+    "endpoint_MAE_J_per_kg": 9.715768576271188,
+    "endpoint_RMSE_J_per_kg": 12.395360450859382,
+    "endpoint_R2": 0.9774430055495309,
+    "endpoint_MARE_percent": 2.3299267417803273
+  }
+}

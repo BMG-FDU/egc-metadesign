@@ -1,0 +1,10 @@
+{
+  "task": "loadpath",
+  "description": "\u8f74\u529b\u53c2\u4e0e\u5ea6\u3001\u5185\u90e8\u6746\u4ef6\u8f74\u529b\u5360\u6bd4\u53ca\u622a\u9762\u529b\u77e9",
+  "cpus": 4,
+  "memory_percent": 25,
+  "samples_per_family": 20,
+  "target_strain": 0.5,
+  "expected_models": 80,
+  "allow_trial_dynamic_flag": false
+}

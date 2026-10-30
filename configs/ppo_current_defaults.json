@@ -1,0 +1,42 @@
+{
+  "GNN_MODEL_PATH": "results/best_model.pth",
+  "SAVE_DIR": "ppo_results",
+  "SEED": 42,
+  "TOTAL_TIMESTEPS": 150000,
+  "MAX_STEPS_PER_EPISODE": 60,
+  "USE_CURRICULUM": true,
+  "ACTION_ORDER": "loop_link_node",
+  "STAGE1_THRESHOLD": 0.5525,
+  "STAGE2_THRESHOLD": 0.595,
+  "STAGE3_THRESHOLD": 0.7225,
+  "MIN_EPISODES_PER_STAGE": 400,
+  "EVAL_WINDOW": 50,
+  "STABILITY_THRESHOLD": 0.07,
+  "COOLDOWN_EPISODES": 60,
+  "CONSECUTIVE_SUCCESS_REQUIRED": 3,
+  "LEARNING_RATE": 0.0003,
+  "GAMMA": 0.98,
+  "ENT_COEF": 0.05,
+  "VF_COEF": 1.0,
+  "N_STEPS": 2048,
+  "BATCH_SIZE": 512,
+  "N_EPOCHS": 15,
+  "GAE_LAMBDA": 0.95,
+  "CLIP_RANGE": 0.2,
+  "MAX_GRAD_NORM": 0.5,
+  "USE_LR_SCHEDULE": true,
+  "USE_POTENTIAL_SHAPING": true,
+  "PI_ARCH": [
+    512,
+    512,
+    256
+  ],
+  "VF_ARCH": [
+    512,
+    512,
+    256
+  ],
+  "SAVE_CHECKPOINTS": true,
+  "SAVE_FREQ": 30000,
+  "EDGE_LENGTH": 1.0
+}

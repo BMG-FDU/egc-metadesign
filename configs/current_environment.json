@@ -1,0 +1,21 @@
+{
+  "source": "User-reported pytorch environment, 2026-10-29",
+  "python": "3.11.0",
+  "abaqus": "2024",
+  "versions": {
+    "torch": "2.8.0+cu129",
+    "numpy": "1.24.3",
+    "pandas": "2.3.2",
+    "scipy": "1.15.3",
+    "scikit-learn": "1.7.1",
+    "matplotlib": "3.10.5",
+    "networkx": "3.3",
+    "gymnasium": "1.2.3",
+    "tqdm": "4.67.1",
+    "tensorboard": "2.20.0",
+    "rich": "14.2.0",
+    "torch-geometric": "2.5.3",
+    "stable-baselines3": "2.7.1",
+    "sb3-contrib": "2.7.1"
+  }
+}

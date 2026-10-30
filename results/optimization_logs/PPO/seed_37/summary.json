@@ -1,0 +1,23 @@
+{
+  "seed": 37,
+  "method": "PPO_LoopLinkAnyPair",
+  "run_status": "completed_budget",
+  "budget": 100000,
+  "actual_gnn_calls": 100000,
+  "best_sea_raw": 797.799072265625,
+  "best_call_index": 69108,
+  "first_raw_sea_over_750_call": 419,
+  "gate_call": 1500,
+  "gate_sea_strictly_greater_than": 750.0,
+  "n750": 419,
+  "right_censored_at_call": null,
+  "episode_end_count": 2415,
+  "tail_episode_best_mean_(0.9B,B]": 638.5503709006445,
+  "tail_episode_count": 177,
+  "device": "cpu",
+  "torch_threads": 1,
+  "model_sha256_before": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+  "model_sha256_after": "a456dd8e055fd6edc0774141d45e58e5a4851c632762d78621d32dca93e5c460",
+  "elapsed_seconds": 9054.8363962,
+  "contiguous_call_history_verified": true
+}

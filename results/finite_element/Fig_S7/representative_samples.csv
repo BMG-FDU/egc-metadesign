@@ -1,0 +1,6 @@
+﻿study,xi,stem,seed,ex
+accepted_fixed_curves,0,fig4c1_seed_014_xi_0,14,
+random_arrangements,0.25,fig4d1_sim_xi_0p25_ex001_cells_0_1_3,42,1
+random_arrangements,0.5,p50_ex001,42,1
+random_arrangements,0.75,p75_ex001,42,1
+same_topology_full,1,xi100,42,

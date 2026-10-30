@@ -1,4 +1,3 @@
-﻿#!/usr/bin/env python3
 import matplotlib
 matplotlib.use('Agg')
 
@@ -12,13 +11,16 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import json
 import time
+import hashlib
+import sys
+import subprocess
 import networkx as nx
-from networkx.readwrite import json_graph
 
 import train_ppo
 
 from lattice_env import LatticeDesignEnv, EnvConfig
 from lattice_state import LatticeState
+from hexagonal_generator import node_link_data
 
 from tqdm.auto import tqdm
 
@@ -66,6 +68,55 @@ def mean_last_fraction(values, frac: float = 0.1) -> float:
     k = max(1, k)
     return float(np.mean(values[-k:]))
 
+
+def _get_gnn_evaluation_history(result):
+
+    events = result.get('gnn_evaluation_history', []) or []
+    if not events:
+        return None
+    frame = pd.DataFrame(events)
+    required = {'gnn_call', 'best_so_far_real'}
+    if not required.issubset(frame.columns):
+        raise ValueError(
+            'gnn_evaluation_history must contain gnn_call and best_so_far_real.'
+        )
+    frame['gnn_call'] = pd.to_numeric(frame['gnn_call'], errors='coerce')
+    frame['best_so_far_real'] = pd.to_numeric(
+        frame['best_so_far_real'], errors='coerce'
+    )
+    return frame.dropna(subset=['gnn_call', 'best_so_far_real']).sort_values('gnn_call')
+
+
+def _budget_window_stats(result, common_budget=None, frac: float = 0.1):
+
+
+    budget = int(common_budget if common_budget is not None else
+                 result.get('gnn_budget', result.get('gnn_calls', 0)))
+    lower = int(np.floor((1.0 - float(frac)) * budget))
+    perf = np.asarray(result.get('episode_perfs', []), dtype=float)
+    calls = np.asarray(result.get('gnn_calls_history', []), dtype=float)
+    if len(perf) != len(calls):
+        raise ValueError('Episode-best values and actual terminal call counts must align')
+    mask = (calls > lower) & (calls <= budget) & np.isfinite(perf)
+    vals = perf[mask]
+    if not len(vals):
+        return float('nan'), float('nan'), 0, 'episode_best_at_episode_end'
+    return float(np.mean(vals)), (float(np.std(vals, ddof=1)) if len(vals) > 1 else float('nan')), int(len(vals)), 'episode_best_at_episode_end'
+
+
+def _first_threshold_call(result, threshold, common_budget):
+
+    events = _get_gnn_evaluation_history(result)
+    if events is None:
+        return None, 'unavailable_episode_end_only'
+    events = events[(events.gnn_call >= 1) & (events.gnn_call <= common_budget)]
+    calls = events.gnn_call.to_numpy(dtype=int)
+    if not np.array_equal(calls, np.arange(1, common_budget + 1)):
+        raise ValueError('Exact N750 requires a complete ordered trace of calls 1..B')
+    hits = events.loc[events.best_so_far_real > threshold, 'gnn_call']
+    return (int(hits.iloc[0]) if len(hits) else None), 'per_gnn_evaluation'
+
+
 def std_last_fraction(values, frac: float = 0.1) -> float:
     if values is None or len(values) == 0:
         return 0.0
@@ -99,6 +150,24 @@ def _prepare_best_so_far_curve(
     result,
     common_budget: int,
 ):
+    events = _get_gnn_evaluation_history(result)
+    if events is not None:
+        curve = events[
+            (events['gnn_call'] >= 0)
+            & (events['gnn_call'] <= common_budget)
+        ].copy()
+        curve['global_best'] = curve['best_so_far_real'].cummax()
+        x = curve['gnn_call'].to_numpy(dtype=float)
+        y = curve['global_best'].to_numpy(dtype=float)
+        if len(x) and x[0] > 0:
+            x = np.insert(x, 0, 0.0)
+            y = np.insert(y, 0, 0.0)
+        if len(x) and x[-1] < common_budget:
+            x = np.append(x, float(common_budget))
+            y = np.append(y, y[-1])
+        if len(x):
+            return x, y
+
     history = result.get(
         'global_best_history',
         [],
@@ -114,21 +183,12 @@ def _prepare_best_so_far_curve(
             np.array([0.0, 0.0]),
         )
 
-    if (
-        gnn_history is None
-        or len(gnn_history) != len(history)
-    ):
-        total_calls = int(
-            result.get('gnn_calls', 0)
+    if gnn_history is None or len(gnn_history) != len(history):
+        raise ValueError(
+            f"{result.get('method', 'method')}: GNN-call history is missing or "
+            "not aligned with best-so-far observations; refusing to synthesize "
+            "a call axis."
         )
-        if len(history) == 1:
-            gnn_history = [total_calls]
-        else:
-            gnn_history = np.linspace(
-                0,
-                total_calls,
-                len(history),
-            ).astype(int).tolist()
 
     curve = pd.DataFrame({
         'gnn_calls': pd.to_numeric(
@@ -205,28 +265,14 @@ def calculate_spi_metrics(results):
     if not results:
         return {}, 0.0, 0, 0.0
 
-    common_budget = max(
-        int(result.get('gnn_calls', 0))
-        for result in results
-    )
-    common_budget = max(2, common_budget)
 
-    reference_best = max(
-        float(
-            result.get(
-                'best_performance',
-                0.0,
-            )
-        )
-        for result in results
-    )
-    reference_best = max(
-        reference_best,
-        np.finfo(float).eps,
-    )
-    common_90pct_threshold = (
-        0.90 * reference_best
-    )
+    common_budget = min(int(r.get('gnn_calls', 0)) for r in results)
+    if common_budget < 2:
+        raise ValueError('At least two actual GNN evaluations per method are required')
+    reference_best = max(float(_prepare_best_so_far_curve(r, common_budget)[1][-1])
+                         for r in results)
+    reference_best = max(reference_best, np.finfo(float).eps)
+    high_performance_threshold = 750.0
 
     metrics_map = {}
 
@@ -237,13 +283,8 @@ def calculate_spi_metrics(results):
             or []
         )
 
-        avg_last10 = mean_last_fraction(
-            perfs,
-            0.1,
-        )
-        std_last10 = std_last_fraction(
-            perfs,
-            0.1,
+        avg_last10, std_last10, n_budget_observations, metric_resolution = (
+            _budget_window_stats(result, common_budget=common_budget, frac=0.1)
         )
 
         x, y = _prepare_best_so_far_curve(
@@ -264,35 +305,11 @@ def calculate_spi_metrics(results):
             quality_score,
         )
 
-        reached_indices = np.flatnonzero(
-            y >= common_90pct_threshold
-        )
-        if reached_indices.size == 0:
-            calls_to_90 = None
-            speed_score = 0.0
-        else:
-            calls_to_90 = int(
-                round(
-                    x[int(reached_indices[0])]
-                )
-            )
-            safe_calls = max(
-                1,
-                min(
-                    calls_to_90,
-                    common_budget,
-                ),
-            )
-            speed_score = float(
-                np.log(
-                    common_budget / safe_calls
-                )
-                / np.log(common_budget)
-            )
-            speed_score = max(
-                0.0,
-                min(1.0, speed_score),
-            )
+        calls_to_750, threshold_resolution = _first_threshold_call(
+            result, high_performance_threshold, common_budget)
+        speed_score = (float(np.log(common_budget / max(1, calls_to_750)) /
+                             np.log(common_budget)) if calls_to_750 is not None else 0.0)
+        speed_score = float(np.clip(speed_score, 0.0, 1.0))
 
         if avg_last10 > 0:
             coefficient_of_variation = (
@@ -326,14 +343,20 @@ def calculate_spi_metrics(results):
             'avg_performance_last10': float(
                 avg_last10
             ),
+            'n_final_budget_observations': int(n_budget_observations),
+            'final_budget_metric_resolution': metric_resolution,
+            'threshold_resolution': threshold_resolution,
+            'threshold_reached': calls_to_750 is not None,
+            'common_budget_calls': int(common_budget),
+            'high_performance_threshold': float(high_performance_threshold),
             'std_performance': float(
                 std_last10
             ),
             'efficiency_nAUC': float(
                 quality_score
             ),
-            'calls_to_common_90pct': (
-                calls_to_90
+            'calls_to_750': (
+                calls_to_750
             ),
             'entry_speed_score': float(
                 speed_score
@@ -350,7 +373,7 @@ def calculate_spi_metrics(results):
         metrics_map,
         float(reference_best),
         int(common_budget),
-        float(common_90pct_threshold),
+        float(high_performance_threshold),
     )
 
 
@@ -373,7 +396,7 @@ def save_best_structure_json(lattice_state, filepath: str, performance: float, m
         return
 
     G = lattice_state.to_networkx_graph()
-    data = json_graph.node_link_data(G)
+    data = node_link_data(G)
 
     for node in data['nodes']:
         x, y = node['id']
@@ -532,9 +555,8 @@ def plot_comparison(results, save_dir, compare_mode='all'):
         method = r['method']
         perfs = r['episode_perfs']
         gnn_history = r.get('gnn_calls_history', [])
-        if not gnn_history or len(gnn_history) != len(perfs):
-            total_calls = r.get('gnn_calls', 0)
-            gnn_history = np.linspace(0, total_calls, len(perfs)).astype(int).tolist()
+        if len(gnn_history) != len(perfs):
+            raise ValueError(f"{method}: missing GNN-call history for episode observations.")
 
         c = METHOD_COLORS.get(method, COLORS['gray'])
         if len(perfs) > 10:
@@ -566,9 +588,8 @@ def plot_comparison(results, save_dir, compare_mode='all'):
         method = r['method']
         history = r['global_best_history']
         gnn_history = r.get('gnn_calls_history', [])
-        if not gnn_history or len(gnn_history) != len(history):
-            total_calls = r.get('gnn_calls', 0)
-            gnn_history = np.linspace(0, total_calls, len(history)).astype(int).tolist()
+        if len(gnn_history) != len(history):
+            raise ValueError(f"{method}: missing GNN-call history for best-so-far observations.")
 
         c = METHOD_COLORS.get(method, COLORS['gray'])
         x_extended, y_extended = extend_curve_to_max(gnn_history, history, max_gnn_calls)
@@ -674,7 +695,7 @@ def apply_decoded_action(
     loop_id: int,
     params,
 ) -> bool:
-    """使用与 PPO 环境 step() 相同的 LatticeState 动作接口。"""
+
     if action_type == 'loop':
         return bool(state.apply_loop_action(loop_id))
 
@@ -757,9 +778,10 @@ def run_greedy(args, env_kwargs, gnn_budget: int):
         verbose=False
     )
     env.reset_gnn_counter(budget=gnn_budget, clear_cache=False)
+    env.run_seed = int(args.seed)
 
     max_steps = env.effective_max_steps
-    num_actions = PPO_TOTAL_ACTIONS  
+    num_actions = PPO_TOTAL_ACTIONS
 
     episode_perfs = []
     global_best_history = []
@@ -784,7 +806,8 @@ def run_greedy(args, env_kwargs, gnn_budget: int):
             best_state_ep = state.clone()
             best_gnn_calls_ep = env.get_gnn_forward_calls()
 
-            for _ in range(max_steps):
+            for step_index in range(max_steps):
+                env.current_step = step_index + 1
                 if env.gnn_budget_exhausted():
                     break
 
@@ -805,6 +828,7 @@ def run_greedy(args, env_kwargs, gnn_budget: int):
                     if not ok:
                         continue
 
+                    env.last_action = int(action)
                     perf_real = env.evaluate_lattice_state(cand)[2]
                     last_calls = _update_gnn_pbar(env, pbar, last_calls)
 
@@ -840,15 +864,18 @@ def run_greedy(args, env_kwargs, gnn_budget: int):
         'method': 'Greedy',
         'episode_perfs': episode_perfs,
         'global_best_history': global_best_history,
-        'best_performance': global_best,
+        'best_performance': float(env.gnn_best_so_far_real),
         'num_episodes': len(episode_perfs),
         'elapsed_time': time.time() - start_time,
         'gnn_calls': env.get_gnn_forward_calls(),
         'gnn_budget': gnn_budget,
         'seed': int(args.seed),
         'gnn_calls_history': gnn_calls_history,
-        'best_lattice_state': best_lattice_state,
-        'best_gnn_calls': best_gnn_calls
+        'gnn_evaluation_history': list(env.gnn_evaluation_history),
+        'best_lattice_state': env.gnn_best_state.clone() if env.gnn_best_state is not None else None,
+        'best_gnn_calls': int(env.gnn_best_call),
+        'predictor_sha256': env.predictor_sha256,
+        'predictor_use_global_feat': env.predictor_use_global_feat
     }
 
 
@@ -869,9 +896,10 @@ def run_hill_climbing(args, env_kwargs, gnn_budget: int):
         verbose=False
     )
     env.reset_gnn_counter(budget=gnn_budget, clear_cache=False)
+    env.run_seed = int(args.seed)
 
     max_steps = env.effective_max_steps
-    num_actions = PPO_TOTAL_ACTIONS 
+    num_actions = PPO_TOTAL_ACTIONS
 
     episode_perfs = []
     global_best_history = []
@@ -897,7 +925,8 @@ def run_hill_climbing(args, env_kwargs, gnn_budget: int):
             best_state_ep = state.clone()
             best_gnn_calls_ep = env.get_gnn_forward_calls()
 
-            for _ in range(max_steps):
+            for step_index in range(max_steps):
+                env.current_step = step_index + 1
                 if env.gnn_budget_exhausted():
                     break
 
@@ -911,6 +940,7 @@ def run_hill_climbing(args, env_kwargs, gnn_budget: int):
                 if not ok:
                     continue
 
+                env.last_action = int(action)
                 perf_real = env.evaluate_lattice_state(cand)[2]
                 last_calls = _update_gnn_pbar(env, pbar, last_calls)
 
@@ -941,15 +971,18 @@ def run_hill_climbing(args, env_kwargs, gnn_budget: int):
         'method': 'Hill Climbing',
         'episode_perfs': episode_perfs,
         'global_best_history': global_best_history,
-        'best_performance': global_best,
+        'best_performance': float(env.gnn_best_so_far_real),
         'num_episodes': len(episode_perfs),
         'elapsed_time': time.time() - start_time,
         'gnn_calls': env.get_gnn_forward_calls(),
         'gnn_budget': gnn_budget,
         'seed': int(args.seed),
         'gnn_calls_history': gnn_calls_history,
-        'best_lattice_state': best_lattice_state,
-        'best_gnn_calls': best_gnn_calls
+        'gnn_evaluation_history': list(env.gnn_evaluation_history),
+        'best_lattice_state': env.gnn_best_state.clone() if env.gnn_best_state is not None else None,
+        'best_gnn_calls': int(env.gnn_best_call),
+        'predictor_sha256': env.predictor_sha256,
+        'predictor_use_global_feat': env.predictor_use_global_feat
     }
 
 
@@ -970,9 +1003,10 @@ def run_random(args, env_kwargs, gnn_budget: int):
         verbose=False
     )
     env.reset_gnn_counter(budget=gnn_budget, clear_cache=False)
+    env.run_seed = int(args.seed)
 
     max_steps = env.effective_max_steps
-    num_actions = PPO_TOTAL_ACTIONS  
+    num_actions = PPO_TOTAL_ACTIONS
 
     episode_perfs = []
     global_best_history = []
@@ -999,7 +1033,8 @@ def run_random(args, env_kwargs, gnn_budget: int):
             best_state_ep = state.clone()
             best_gnn_calls_ep = env.get_gnn_forward_calls()
 
-            for _ in range(max_steps):
+            for step_index in range(max_steps):
+                env.current_step = step_index + 1
                 if env.gnn_budget_exhausted():
                     break
 
@@ -1013,6 +1048,7 @@ def run_random(args, env_kwargs, gnn_budget: int):
                 if not ok:
                     continue
 
+                env.last_action = int(action)
                 perf_real = env.evaluate_lattice_state(cand)[2]
                 last_calls = _update_gnn_pbar(env, pbar, last_calls)
 
@@ -1041,15 +1077,18 @@ def run_random(args, env_kwargs, gnn_budget: int):
         'method': 'Random',
         'episode_perfs': episode_perfs,
         'global_best_history': global_best_history,
-        'best_performance': global_best,
+        'best_performance': float(env.gnn_best_so_far_real),
         'num_episodes': len(episode_perfs),
         'elapsed_time': time.time() - start_time,
         'gnn_calls': env.get_gnn_forward_calls(),
         'gnn_budget': gnn_budget,
         'seed': int(args.seed),
         'gnn_calls_history': gnn_calls_history,
-        'best_lattice_state': best_lattice_state,
-        'best_gnn_calls': best_gnn_calls
+        'gnn_evaluation_history': list(env.gnn_evaluation_history),
+        'best_lattice_state': env.gnn_best_state.clone() if env.gnn_best_state is not None else None,
+        'best_gnn_calls': int(env.gnn_best_call),
+        'predictor_sha256': env.predictor_sha256,
+        'predictor_use_global_feat': env.predictor_use_global_feat
     }
 
 
@@ -1067,16 +1106,9 @@ def save_comparison_csv(results, save_dir):
         method = result[
             'method'
         ].replace(' ', '_')
-        gnn_history = result.get(
-            'gnn_calls_history',
-            list(
-                range(
-                    1,
-                    len(result['episode_perfs']) + 1,
-                )
-            ),
-        )
-
+        gnn_history = result.get('gnn_calls_history', [])
+        if len(gnn_history) != len(result['episode_perfs']):
+            raise ValueError('Cannot export synthetic or misaligned GNN-call coordinates')
         df = pd.DataFrame({
             'gnn_calls': gnn_history[
                 :len(result['episode_perfs'])
@@ -1095,12 +1127,17 @@ def save_comparison_csv(results, save_dir):
             ),
             index=False,
         )
+        events = _get_gnn_evaluation_history(result)
+        if events is not None:
+            events = events.assign(method=result['method'], seed=result.get('seed'),
+                                   predictor_sha256=result.get('predictor_sha256'))
+            events.to_csv(os.path.join(csv_dir, f'{method}_per_gnn_call.csv'), index=False)
 
     (
         spi_map,
         reference_best,
         common_budget,
-        threshold_90,
+        threshold_750,
     ) = calculate_spi_metrics(results)
 
     summary_data = []
@@ -1114,14 +1151,25 @@ def save_comparison_csv(results, save_dir):
             'avg_performance_last10': metrics[
                 'avg_performance_last10'
             ],
+            'n_final_budget_observations': metrics[
+                'n_final_budget_observations'
+            ],
+            'final_budget_metric_resolution': metrics[
+                'final_budget_metric_resolution'
+            ],
+            'threshold_resolution': metrics['threshold_resolution'],
+            'threshold_reached': metrics['threshold_reached'],
+            'common_budget_calls': int(common_budget),
+            'high_performance_threshold_J_kg': float(threshold_750),
+            'predictor_sha256': result.get('predictor_sha256'),
             'std_performance': metrics[
                 'std_performance'
             ],
             'efficiency_nAUC': metrics[
                 'efficiency_nAUC'
             ],
-            'calls_to_common_90pct': metrics[
-                'calls_to_common_90pct'
+            'calls_to_750': metrics[
+                'calls_to_750'
             ],
             'Search Performance Index': metrics[
                 'Search Performance Index'
@@ -1150,8 +1198,8 @@ def save_comparison_csv(results, save_dir):
         'common_reference_best': float(
             reference_best
         ),
-        'common_90pct_threshold': float(
-            threshold_90
+        'high_performance_threshold': float(
+            threshold_750
         ),
         'total_actions_per_method': int(
             PPO_TOTAL_ACTIONS
@@ -1167,6 +1215,11 @@ def save_comparison_csv(results, save_dir):
         ),
         'num_points_per_edge': int(NUM_POINTS_PER_EDGE),
         'random_seed': int(results[0].get('seed', 42)) if results else None,
+        'final_budget_mean_definition': 'arithmetic mean of episode-best raw SEA for episode-end actual GNN-call counts in (0.9B, B]',
+        'threshold_definition': 'first logged GNN forward-call index with best-so-far raw SEA strictly greater than 750 J/kg',
+        'gnn_calls_definition': 'actual successful predictor forwards; initialization and tested candidates included; cache hits excluded',
+        'not_reached': 'null; never imputed as reaching at B',
+        'predictor_sha256': results[0].get('predictor_sha256') if results else None,
         'greedy_protocol': 'exhaustive_all_152_actions_per_step',
         'greedy_actions_evaluated_per_step': int(PPO_TOTAL_ACTIONS),
     }
@@ -1191,7 +1244,7 @@ def print_summary_table(results):
         spi_map,
         reference_best,
         common_budget,
-        threshold_90,
+        threshold_750,
     ) = calculate_spi_metrics(results)
 
     print("\\n" + "=" * 168)
@@ -1206,14 +1259,14 @@ def print_summary_table(results):
         f"{'Avg(last10%)':>14} "
         f"{'Std(last10%)':>14} "
         f"{'nAUC':>10} "
-        f"{'Calls@90%':>12} "
+        f"{'Calls@750':>12} "
         f"{'SPI':>10} "
         f"{'Episodes':>10} "
         f"{'GNN Calls':>12}"
     )
     print(
         f"Reference best = {reference_best:.6f}; "
-        f"common 90% threshold = {threshold_90:.6f}; "
+        f"common high-performance threshold = {threshold_750:.6f}; "
         f"common budget = {common_budget:,}"
     )
     print("-" * 168)
@@ -1232,7 +1285,7 @@ def print_summary_table(results):
         marker = '🏆' if index == 0 else '  '
         metrics = spi_map[result['method']]
         calls_90 = metrics[
-            'calls_to_common_90pct'
+            'calls_to_750'
         ]
         calls_text = (
             f"{calls_90:,}"
@@ -1255,13 +1308,54 @@ def print_summary_table(results):
     print("=" * 168)
 
 
-# =============================================================================
-# Main
-# =============================================================================
+def run_multi_seed_comparison(args):
+    if len(set(args.seeds)) != len(args.seeds):
+        raise ValueError('Seeds must be distinct')
+    root = os.path.join(args.save_dir, 'multiseed_' + datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+    os.makedirs(root, exist_ok=True)
+    with open(os.path.join(root, 'run_config.json'), 'w', encoding='utf-8') as stream:
+        json.dump(vars(args), stream, indent=2)
+    frames = []
+    for seed in args.seeds:
+        seed_dir = os.path.join(root, f'seed_{seed}')
+        command = [sys.executable, os.path.abspath(__file__), '--gnn_model', os.path.abspath(args.gnn_model),
+                   '--gnn_budget', str(args.gnn_budget), '--max_steps', str(args.max_steps),
+                   '--seed', str(seed), '--save_dir', seed_dir,
+                   '--methods', *args.methods, '--ppo_variants', *args.ppo_variants]
+        if args.expected_model_sha256:
+            command.extend(['--expected_model_sha256', args.expected_model_sha256])
+        subprocess.run(command, check=True)
+        from pathlib import Path
+        summaries = list(Path(seed_dir).glob('compare_*/csv_data/summary.csv'))
+        if len(summaries) != 1:
+            raise RuntimeError('Expected exactly one completed comparison per seed')
+        frame = pd.read_csv(summaries[0])
+        if not (frame.threshold_resolution == 'per_gnn_evaluation').all():
+            raise RuntimeError('Multi-seed N750 requires exact per-evaluation records')
+        frames.append(frame.assign(seed=int(seed)))
+    joined = pd.concat(frames, ignore_index=True)
+    joined.to_csv(os.path.join(root, 'per_seed_comparison_metrics.csv'), index=False)
+    rows = []
+    for method, frame in joined.groupby('method', sort=False):
+        reached = frame.calls_to_750.dropna()
+        rows.append({'method': method, 'n_seeds': len(frame), 'n_reached': len(reached),
+                     'n_not_reached': len(frame) - len(reached),
+                     'N750_mean_reached': reached.mean(), 'N750_SD_reached': reached.std(ddof=1),
+                     'N750_median_reached': reached.median(),
+                     'best_SEA_mean': frame.best_performance.mean(),
+                     'best_SEA_SD': frame.best_performance.std(ddof=1),
+                     'final_window_episode_best_mean': frame.avg_performance_last10.mean(),
+                     'final_window_episode_best_SD': frame.avg_performance_last10.std(ddof=1)})
+    pd.DataFrame(rows).to_csv(os.path.join(root, 'cross_seed_summary.csv'), index=False)
+    print(f'Multi-seed comparison completed: {root}')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Compare optimization methods with STRICT GNN forwards budget')
     parser.add_argument('--gnn_budget', type=int, default=100000, help='Total GNN forward budget (strict)')
     parser.add_argument('--seed', type=int, default=42, help='Random seed used independently by each method')
+    parser.add_argument('--seeds', type=int, nargs='+', default=None, help='Independent seeds, e.g. 0 1 2')
+    parser.add_argument('--expected_model_sha256', default=None, help='Optional mandatory checkpoint identity')
     parser.add_argument('--max_steps', type=int, default=60, help='Maximum steps per episode')
     parser.add_argument('--gnn_model', type=str, default='results/best_model.pth', help='GNN model path')
     parser.add_argument('--methods', type=str, nargs='+', default=['all'],
@@ -1272,9 +1366,29 @@ def main():
     parser.add_argument('--save_dir', type=str, default='comparison_results', help='Output directory')
     args = parser.parse_args()
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if args.expected_model_sha256:
+        with open(args.gnn_model, 'rb') as stream:
+            digest = hashlib.file_digest(stream, 'sha256').hexdigest().upper()
+        if digest != args.expected_model_sha256.upper():
+            raise ValueError(f"Wrong GNN predictor: {digest}")
+    else:
+        with open(args.gnn_model, 'rb') as stream:
+            digest = hashlib.file_digest(stream, 'sha256').hexdigest().upper()
+    if args.seeds is not None:
+        run_multi_seed_comparison(args)
+        return
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     save_dir = os.path.join(args.save_dir, f'compare_{timestamp}')
     os.makedirs(save_dir, exist_ok=True)
+    with open(os.path.join(save_dir, 'run_config.json'), 'w', encoding='utf-8') as stream:
+        json.dump(dict(vars(args), predictor_sha256=digest,
+                       num_points_per_edge=NUM_POINTS_PER_EDGE, total_actions=PPO_TOTAL_ACTIONS,
+                       normalization_denominator=EnvConfig.MAX_ENERGY,
+                       normalized_SEA_capped=EnvConfig.NORMALIZED_SEA_CAP,
+                       stage_thresholds=[train_ppo.Config.STAGE1_THRESHOLD,
+                                         train_ppo.Config.STAGE2_THRESHOLD,
+                                         train_ppo.Config.STAGE3_THRESHOLD]), stream, indent=2)
 
     print("\n" + "=" * 70)
     print("🔬 Algorithm Comparison - X-axis: Cumulative GNN Calls (STRICT)")
@@ -1361,6 +1475,8 @@ def main():
         if m != 'ppo' and m in runners:
             results.append(runners[m](args, env_kwargs, args.gnn_budget))
 
+    if any(int(r['gnn_calls']) != args.gnn_budget for r in results):
+        raise RuntimeError('A method failed to complete the shared actual GNN-forward budget')
     results_for_json = []
     for r in results:
         r_copy = {k: v for k, v in r.items() if k != 'best_lattice_state'}
@@ -1368,7 +1484,7 @@ def main():
 
     with open(os.path.join(save_dir, 'results.json'), 'w') as f:
         json.dump([{k: v for k, v in r.items()
-                    if k not in ['episode_perfs', 'global_best_history', 'gnn_calls_history']}
+                    if k not in ['episode_perfs', 'global_best_history', 'gnn_calls_history', 'gnn_evaluation_history']}
                    for r in results_for_json], f, indent=2)
 
     save_comparison_csv(results, save_dir)

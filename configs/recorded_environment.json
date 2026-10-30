@@ -1,0 +1,17 @@
+{
+  "python": "3.11.0 | packaged by Anaconda, Inc. | (main, Mar  1 2023, 18:18:21) [MSC v.1916 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "torch": "2.8.0+cu129",
+  "torch_geometric": "2.5.3",
+  "cuda_available": true,
+  "cuda_device": "NVIDIA GeForce RTX 5090 D",
+  "numpy": "2.2.6",
+  "pandas": "2.3.2",
+  "scikit_learn": "1.7.1",
+  "matplotlib": "3.10.5",
+  "gymnasium": "1.2.0",
+  "stable_baselines3": "2.7.0",
+  "sb3_contrib": "2.7.0",
+  "tensorboard": "2.21.0",
+  "rich": "15.0.0"
+}

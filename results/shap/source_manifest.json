@@ -1,0 +1,54 @@
+{
+  "source_directory": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results",
+  "saved_predictions_checkpoint_sha256": "63b0c20b734ea9ba2581b89ca231e539a1ff3767dab3d2a881e817174227e5fb",
+  "split_counts": {
+    "fit": 566,
+    "final_holdout": 177,
+    "validation": 142
+  },
+  "method": "Exact interventional linear SHAP; fitting empirical background",
+  "split": "Descriptor-grouped 64/16/20 approximately by groups; fit-only scaling; no final-holdout refit",
+  "orientation": "Undirected edge angle modulo 180 degrees; 120-180 degree bin is reference; first V1-V6 polygon (position audited separately)",
+  "SHAP_background": "Fitting-set descriptor means; target units J/kg",
+  "files": {
+    "descriptor_inputs_and_splits.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\descriptor_dataset_and_splits.csv",
+      "source_sha256": "6a7f266ea25c03547ea3187a484c1406f45e903a88932a04d329a92d78219d54",
+      "rows": 885
+    },
+    "proxy_parameters.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\proxy_parameters.csv",
+      "source_sha256": "01af88be0166bd8f4fe1c252c19b185ec5c7840de76f051359c5f67e704f1fec",
+      "rows": 12
+    },
+    "fidelity_metrics.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\fidelity_comparison.csv",
+      "source_sha256": "cef665dccc6c9cf4d3f88ae4fb1c47e1583322388c761aff2e9ca85c4756ab90",
+      "rows": 6
+    },
+    "proxy_holdout_predictions.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\proxy_predictions_all_splits.csv",
+      "source_sha256": "5fbb6ac5ce0b3caa4c2c2b4228bb8ba92379bb9fa788acf2d0ca3c728290eb46",
+      "rows": 354
+    },
+    "seven_descriptor_SHAP_values.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\seven_descriptor_SHAP_and_predictions.csv",
+      "source_sha256": "7a578601ff88dda1ad59f1c17098eeed3621aac48992e28fcc6dafe71a8544cb",
+      "rows": 177
+    },
+    "Fig5f_beeswarm_plot_data.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\seven_descriptor_beeswarm_plot_data.csv",
+      "source_sha256": "1486b0ac24400a3d0fb0f75f224c6cbd26c11b49f8a178bb2c19a76f5aa41542",
+      "rows": 1239
+    },
+    "seven_descriptor_importance.csv": {
+      "source": "D:\\WORK\\20261010\\R1_10_FullModel_7Descriptors_SHAP\\results\\seven_descriptor_importance.csv",
+      "source_sha256": "0d42da811065b9c8119f477390eb98ba8d4f0b3974721564579d444d3baf3992",
+      "rows": 7
+    },
+    "FigS10c_fit_correlation.csv": {
+      "derived_from": "descriptor_inputs_and_splits.csv",
+      "method": "Pearson correlation, fitting subset only (566 rows)"
+    }
+  }
+}

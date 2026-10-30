@@ -1,4 +1,3 @@
-﻿#!/usr/bin/env python3
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
@@ -6,15 +5,18 @@ import torch
 import json
 import os
 import copy
+import hashlib
 from typing import Tuple, Dict, Any, Optional
 from collections import deque
 
 from lattice_state import LatticeState
+from hexagonal_generator import node_link_data
 from GNN import parse_networkx_json, GINCurveRegressorWithDenom
 
 
 class EnvConfig:
-    MAX_ENERGY = 850
+    MAX_ENERGY = float(os.environ.get("R1_9_MAX_ENERGY", "1000"))
+    NORMALIZED_SEA_CAP = os.environ.get("R1_9_NORMALIZED_SEA_CAP", "1") == "1"
     EDGE_LENGTH = 1.0
     NUM_POINTS_PER_EDGE = 10
     MAX_STEPS = 60
@@ -38,12 +40,12 @@ class EnvConfig:
     LINK_ACTIONS_PER_LOOP = 15
     LINK_ACTIONS_TOTAL = 30
     NODE_POSITIONS_PER_EDGE = 10
-    NODE_ACTIONS_PER_LOOP = 6 * NODE_POSITIONS_PER_EDGE  
-    NODE_ACTIONS_TOTAL = 2 * NODE_ACTIONS_PER_LOOP      
+    NODE_ACTIONS_PER_LOOP = 6 * NODE_POSITIONS_PER_EDGE
+    NODE_ACTIONS_TOTAL = 2 * NODE_ACTIONS_PER_LOOP
 
-    STAGE2_ACTIONS_LOOP_LINK_NODE = 32  
-    STAGE2_ACTIONS_LOOP_NODE_LINK = 122  
-    STAGE3_ACTIONS = 152                
+    STAGE2_ACTIONS_LOOP_LINK_NODE = 32
+    STAGE2_ACTIONS_LOOP_NODE_LINK = 122
+    STAGE3_ACTIONS = 152
 
 
 class RewardConfig:
@@ -77,9 +79,11 @@ class LatticeDesignEnv(gym.Env):
         max_steps: int = EnvConfig.MAX_STEPS,
         curriculum_enabled: bool = EnvConfig.CURRICULUM_ENABLED,
         curriculum_stage: int = EnvConfig.INITIAL_STAGE,
+        action_curriculum_enabled: Optional[bool] = None,
+        step_curriculum_enabled: Optional[bool] = None,
         use_potential_shaping: bool = EnvConfig.USE_POTENTIAL_SHAPING,
-        action_order: str = 'loop_link_node',  
-        gnn_budget: Optional[int] = None,      
+        action_order: str = 'loop_link_node',
+        gnn_budget: Optional[int] = None,
         verbose: bool = False
     ):
         super().__init__()
@@ -102,7 +106,13 @@ class LatticeDesignEnv(gym.Env):
                 f"Invalid action_order: {action_order}. Must be 'loop_link_node' or 'loop_node_link'"
             )
 
-        self.curriculum_enabled = curriculum_enabled
+        self.action_curriculum_enabled = bool(
+            curriculum_enabled if action_curriculum_enabled is None else action_curriculum_enabled
+        )
+        self.step_curriculum_enabled = bool(
+            curriculum_enabled if step_curriculum_enabled is None else step_curriculum_enabled
+        )
+        self.curriculum_enabled = self.action_curriculum_enabled or self.step_curriculum_enabled
         self.curriculum_stage = curriculum_stage
         self.episodes_in_stage = 0
         self._prev_stage_actions = EnvConfig.STAGE1_ACTIONS
@@ -122,12 +132,12 @@ class LatticeDesignEnv(gym.Env):
         self.lattice_state: Optional[LatticeState] = None
         self.current_step = 0
         self.prev_curve = None
-        self.prev_performance = 0.0            
-        self.prev_performance_real = 0.0        
-        self.best_performance = 0.0             
+        self.prev_performance = 0.0
+        self.prev_performance_real = 0.0
+        self.best_performance = 0.0
         self.best_performance_real = 0.0
         self.best_state_in_episode: Optional[LatticeState] = None
-        self.best_ever = 0.0                    
+        self.best_ever = 0.0
         self.best_ever_real = 0.0
         self.performance_history = deque(maxlen=50)
 
@@ -136,6 +146,13 @@ class LatticeDesignEnv(gym.Env):
 
         self._cache: Dict[int, Tuple[np.ndarray, float, float]] = {}
         self.gnn_forward_calls = 0
+        self.gnn_evaluation_history = []
+        self.gnn_best_so_far_real = 0.0
+        self.gnn_best_state = None
+        self.gnn_best_call = 0
+        self.current_episode = 0
+        self.last_action = None
+        self.run_seed = None
         self.gnn_cache_hits = 0
         self.gnn_cache_misses = 0
         self.gnn_budget = gnn_budget
@@ -147,38 +164,45 @@ class LatticeDesignEnv(gym.Env):
                 print(f"[LatticeEnv] GNN forward budget enabled: {self.gnn_budget}")
 
     def _setup_curriculum(self):
-        if self.action_order == 'loop_link_node':
-            stage2_actions = EnvConfig.STAGE2_ACTIONS_LOOP_LINK_NODE  
-        else:
-            stage2_actions = EnvConfig.STAGE2_ACTIONS_LOOP_NODE_LINK  
-
-        if self.curriculum_enabled:
-            if self.curriculum_stage == 1:
-                self.available_action_types = ['loop']
-                self.effective_max_steps = EnvConfig.STAGE1_MAX_STEPS
-                self.available_actions = EnvConfig.STAGE1_ACTIONS
-                self._target_actions = EnvConfig.STAGE1_ACTIONS
-
-            elif self.curriculum_stage == 2:
-                self.available_action_types = ['loop', 'link'] if self.action_order == 'loop_link_node' else ['loop', 'node']
-                self.effective_max_steps = self._calculate_gradual_steps(
-                    EnvConfig.STAGE2_BASE_STEPS, EnvConfig.STAGE2_MAX_STEPS
-                )
-                self._target_actions = stage2_actions
-                self.available_actions = self._calculate_gradual_actions(self._prev_stage_actions, stage2_actions)
-
-            else:
-                self.available_action_types = ['loop', 'link', 'node'] if self.action_order == 'loop_link_node' else ['loop', 'node', 'link']
-                self.effective_max_steps = self._calculate_gradual_steps(
-                    EnvConfig.STAGE3_BASE_STEPS, EnvConfig.STAGE3_MAX_STEPS
-                )
-                self._target_actions = EnvConfig.STAGE3_ACTIONS
-                self.available_actions = self._calculate_gradual_actions(self._prev_stage_actions, EnvConfig.STAGE3_ACTIONS)
-        else:
+        stage2_actions = (
+            EnvConfig.STAGE2_ACTIONS_LOOP_LINK_NODE
+            if self.action_order == 'loop_link_node'
+            else EnvConfig.STAGE2_ACTIONS_LOOP_NODE_LINK
+        )
+        all_types = ['loop', 'link', 'node'] if self.action_order == 'loop_link_node' else ['loop', 'node', 'link']
+        stage_types = {
+            1: ['loop'],
+            2: (['loop', 'link'] if self.action_order == 'loop_link_node' else ['loop', 'node']),
+            3: all_types,
+        }
+        action_targets = {
+            1: EnvConfig.STAGE1_ACTIONS,
+            2: stage2_actions,
+            3: EnvConfig.STAGE3_ACTIONS,
+        }
+        self.available_action_types = stage_types[self.curriculum_stage] if self.action_curriculum_enabled else all_types
+        self._target_actions = action_targets[self.curriculum_stage] if self.action_curriculum_enabled else EnvConfig.STAGE3_ACTIONS
+        if not self.action_curriculum_enabled:
             self.available_actions = EnvConfig.STAGE3_ACTIONS
-            self.effective_max_steps = self.max_steps
-            self.available_action_types = ['loop', 'link', 'node'] if self.action_order == 'loop_link_node' else ['loop', 'node', 'link']
-            self._target_actions = EnvConfig.STAGE3_ACTIONS
+        elif self.curriculum_stage == 1:
+            self.available_actions = EnvConfig.STAGE1_ACTIONS
+        else:
+            self.available_actions = self._calculate_gradual_actions(
+                self._prev_stage_actions, self._target_actions
+            )
+
+        if not self.step_curriculum_enabled:
+            self.effective_max_steps = int(self.max_steps)
+        elif self.curriculum_stage == 1:
+            self.effective_max_steps = EnvConfig.STAGE1_MAX_STEPS
+        elif self.curriculum_stage == 2:
+            self.effective_max_steps = self._calculate_gradual_steps(
+                EnvConfig.STAGE2_BASE_STEPS, EnvConfig.STAGE2_MAX_STEPS
+            )
+        else:
+            self.effective_max_steps = self._calculate_gradual_steps(
+                EnvConfig.STAGE3_BASE_STEPS, EnvConfig.STAGE3_MAX_STEPS
+            )
 
     def _calculate_gradual_steps(self, base_steps: int, max_steps: int) -> int:
         additional_steps = self.episodes_in_stage // EnvConfig.STEPS_INCREASE_INTERVAL
@@ -188,40 +212,46 @@ class LatticeDesignEnv(gym.Env):
         if self.episodes_in_stage >= EnvConfig.ACTION_UNLOCK_EPISODES:
             return target_actions
         progress = self.episodes_in_stage / EnvConfig.ACTION_UNLOCK_EPISODES
-        smooth_progress = progress * progress * (3 - 2 * progress)  # smoothstep
+        smooth_progress = progress * progress * (3 - 2 * progress)
         unlocked = int(start_actions + (target_actions - start_actions) * smooth_progress)
         return max(start_actions, min(unlocked, target_actions))
 
     def set_episodes_in_stage(self, episodes: int):
         old_steps = self.effective_max_steps
         old_actions = self.available_actions
-        self.episodes_in_stage = episodes
-
-        stage2_actions = EnvConfig.STAGE2_ACTIONS_LOOP_LINK_NODE if self.action_order == 'loop_link_node' \
-            else EnvConfig.STAGE2_ACTIONS_LOOP_NODE_LINK
-
-        if self.curriculum_enabled:
+        self.episodes_in_stage = int(episodes)
+        if self.step_curriculum_enabled:
             if self.curriculum_stage == 2:
                 self.effective_max_steps = self._calculate_gradual_steps(
                     EnvConfig.STAGE2_BASE_STEPS, EnvConfig.STAGE2_MAX_STEPS
                 )
-                self.available_actions = self._calculate_gradual_actions(self._prev_stage_actions, stage2_actions)
             elif self.curriculum_stage == 3:
                 self.effective_max_steps = self._calculate_gradual_steps(
                     EnvConfig.STAGE3_BASE_STEPS, EnvConfig.STAGE3_MAX_STEPS
                 )
-                self.available_actions = self._calculate_gradual_actions(self._prev_stage_actions, EnvConfig.STAGE3_ACTIONS)
-
+        if self.action_curriculum_enabled:
+            target = (
+                EnvConfig.STAGE2_ACTIONS_LOOP_LINK_NODE
+                if self.action_order == 'loop_link_node'
+                else EnvConfig.STAGE2_ACTIONS_LOOP_NODE_LINK
+            )
+            if self.curriculum_stage == 2:
+                self.available_actions = self._calculate_gradual_actions(self._prev_stage_actions, target)
+            elif self.curriculum_stage == 3:
+                self.available_actions = self._calculate_gradual_actions(
+                    self._prev_stage_actions, EnvConfig.STAGE3_ACTIONS
+                )
         if self.verbose:
             if old_steps != self.effective_max_steps:
-                print(f"Steps: {old_steps} → {self.effective_max_steps}")
+                print(f"Steps: {old_steps} -> {self.effective_max_steps}")
             if old_actions != self.available_actions:
-                print(f"Actions: {old_actions} → {self.available_actions}")
+                print(f"Actions: {old_actions} -> {self.available_actions}")
 
     def set_curriculum_stage(self, stage: int):
         old_stage = self.curriculum_stage
         if old_stage != stage:
-            self._prev_stage_actions = self.available_actions
+            if self.action_curriculum_enabled:
+                self._prev_stage_actions = self.available_actions
             self.episodes_in_stage = 0
         self.curriculum_stage = min(stage, 3)
         self._setup_curriculum()
@@ -243,6 +273,13 @@ class LatticeDesignEnv(gym.Env):
 
     def reset_gnn_counter(self, budget: Optional[int] = None, clear_cache: bool = False):
         self.gnn_forward_calls = 0
+        self.gnn_evaluation_history = []
+        self.gnn_best_so_far_real = 0.0
+        self.gnn_best_state = None
+        self.gnn_best_call = 0
+        self.current_episode = 0
+        self.last_action = None
+        self.run_seed = None
         self.gnn_cache_hits = 0
         self.gnn_cache_misses = 0
         if budget is not None:
@@ -260,7 +297,15 @@ class LatticeDesignEnv(gym.Env):
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"GNN model not found: {model_path}")
 
-        checkpoint = torch.load(model_path, map_location=self.device)
+        with open(model_path, 'rb') as stream:
+            self.predictor_sha256 = hashlib.file_digest(stream, 'sha256').hexdigest().upper()
+        checkpoint = torch.load(model_path, map_location=self.device, weights_only=True)
+
+
+        decoder_in = int(checkpoint['head_curve.project.weight'].shape[1])
+        if decoder_in not in (512, 516):
+            raise ValueError(f"Unsupported predictor decoder input size: {decoder_in}")
+        self.predictor_use_global_feat = decoder_in == 516
         denom_channels = 1
         if 'head_denom.4.bias' in checkpoint:
             denom_channels = checkpoint['head_denom.4.bias'].shape[0]
@@ -268,7 +313,7 @@ class LatticeDesignEnv(gym.Env):
         model = GINCurveRegressorWithDenom(
             in_channels=4, out_dim=100, denom_channels=denom_channels,
             hidden=256, num_layers=8, dropout=0.2, num_global_features=4,
-            use_global_feat=False, pooling_type='dual', use_denom_head=True,
+            use_global_feat=self.predictor_use_global_feat, pooling_type='dual', use_denom_head=True,
             use_edge_feat=True, decoder_type='cnn', seq_len=100, out_channels_curve=1
         ).to(self.device)
 
@@ -279,12 +324,11 @@ class LatticeDesignEnv(gym.Env):
     def _graph_to_pyg_data_from_state(self, lattice_state: LatticeState):
         G = lattice_state.to_networkx_graph()
         import tempfile
-        from networkx.readwrite import json_graph
 
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             temp_json = f.name
 
-        data = json_graph.node_link_data(G)
+        data = node_link_data(G)
         for node in data['nodes']:
             x, y = node['id']
             node['pos'] = [x, y]
@@ -301,6 +345,7 @@ class LatticeDesignEnv(gym.Env):
         try:
             graph_data = parse_networkx_json(temp_json)
             graph_data.batch = torch.zeros(graph_data.num_nodes, dtype=torch.long)
+            graph_data.num_graphs = 1
             graph_data = graph_data.to(self.device)
         finally:
             if os.path.exists(temp_json):
@@ -310,6 +355,12 @@ class LatticeDesignEnv(gym.Env):
 
     def _state_hash_from_state(self, lattice_state: LatticeState) -> int:
         return hash((tuple(lattice_state.center_loop1), tuple(lattice_state.center_loop2)))
+
+    def _normalize_sea(self, raw_sea: float) -> float:
+        if self.MAX_ENERGY <= 0:
+            raise ValueError("SEA normalization denominator must be positive")
+        normalized = max(0.0, float(raw_sea) / self.MAX_ENERGY)
+        return min(1.0, normalized) if EnvConfig.NORMALIZED_SEA_CAP else normalized
 
     def evaluate_lattice_state(self, lattice_state: LatticeState) -> Tuple[np.ndarray, float, float]:
         state_hash = self._state_hash_from_state(lattice_state)
@@ -330,10 +381,26 @@ class LatticeDesignEnv(gym.Env):
                 curve = pred_norm[0].cpu().numpy()
                 pred_denom = torch.exp(pred_denom_log)
                 pred_real = pred_norm * pred_denom[:, :1]
-                performance_real = pred_real.max().item()
-                performance_normalized = float(np.clip(performance_real / self.MAX_ENERGY, 0, 1))
+                performance_real = pred_real[0, -1].item()
+                performance_normalized = self._normalize_sea(performance_real)
 
             self.gnn_forward_calls += 1
+            if performance_real > self.gnn_best_so_far_real:
+                self.gnn_best_so_far_real = float(performance_real)
+                self.gnn_best_state = lattice_state.clone()
+                self.gnn_best_call = int(self.gnn_forward_calls)
+            self.gnn_evaluation_history.append({
+                'gnn_call': int(self.gnn_forward_calls),
+                'performance_real': float(performance_real),
+                'best_so_far_real': float(self.gnn_best_so_far_real),
+                'episode': int(self.current_episode),
+                'step': int(self.current_step),
+                'stage': int(self.curriculum_stage),
+                'action': self.last_action,
+                'seed': self.run_seed,
+                'state_id': hashlib.sha256(repr((tuple(lattice_state.center_loop1),
+                                                tuple(lattice_state.center_loop2))).encode()).hexdigest(),
+            })
             self._cache[state_hash] = (curve, performance_normalized, performance_real)
             return self._cache[state_hash]
         except Exception as e:
@@ -392,13 +459,13 @@ class LatticeDesignEnv(gym.Env):
         return np.concatenate([curve.astype(np.float32), extra]).astype(np.float32)
 
     def _decode_action(self, action: int) -> Tuple[str, int, Any]:
-        """Decode one of the fixed 152 actions."""
+
         action = int(action)
         if not 0 <= action < self.TOTAL_ACTIONS:
             return ('invalid', 0, ())
 
-        node_actions_per_loop = EnvConfig.NODE_ACTIONS_PER_LOOP  
-        node_positions = EnvConfig.NODE_POSITIONS_PER_EDGE       
+        node_actions_per_loop = EnvConfig.NODE_ACTIONS_PER_LOOP
+        node_positions = EnvConfig.NODE_POSITIONS_PER_EDGE
 
         if self.action_order == 'loop_link_node':
             if action < EnvConfig.STAGE1_ACTIONS:
@@ -424,7 +491,7 @@ class LatticeDesignEnv(gym.Env):
             point_idx = remainder % node_positions
             return ('node', loop_id, (side_id, point_idx))
 
-        # loop_node_link
+
         if action < EnvConfig.STAGE1_ACTIONS:
             return ('loop', action + 1, ())
 
@@ -472,10 +539,10 @@ class LatticeDesignEnv(gym.Env):
             reward_breakdown['total'] = float(base_reward)
             return float(base_reward), reward_breakdown
 
-        # ---------- episode-best delta ----------
+
         current_delta = float(current_perf - prev_perf)
         new_best = float(max(prev_best, current_perf))
-        best_delta = float(new_best - prev_best)  # >= 0
+        best_delta = float(new_best - prev_best)
 
         multiplier = cfg.DELTA_MULTIPLIER_LOOP if is_loop_action else cfg.DELTA_MULTIPLIER_OTHER
         delta_reward = best_delta * multiplier
@@ -515,7 +582,7 @@ class LatticeDesignEnv(gym.Env):
 
         prev_high = max(0.0, float(prev_best) - cfg.HIGH_PERF_THRESHOLD)
         new_high = max(0.0, float(new_best) - cfg.HIGH_PERF_THRESHOLD)
-        high_inc = new_high - prev_high  # >= 0
+        high_inc = new_high - prev_high
         if high_inc > 0:
             high_perf = high_inc * cfg.HIGH_PERF_MULTIPLIER
             base_reward += float(high_perf)
@@ -528,7 +595,10 @@ class LatticeDesignEnv(gym.Env):
         return float(final_reward), reward_breakdown
 
     def reset(self, seed=None, options=None) -> Tuple[np.ndarray, Dict]:
+        self.current_episode += 1
+        self.last_action = None
         if seed is not None:
+            self.run_seed = int(seed)
             np.random.seed(seed)
             import random
             random.seed(seed)
@@ -551,8 +621,8 @@ class LatticeDesignEnv(gym.Env):
         self.episode_visited_states.add(initial_hash)
         self.visited_states.add(initial_hash)
 
-        if self.prev_performance > self.best_ever:
-            self.best_ever = self.prev_performance
+        self.best_ever = max(self.best_ever, self.prev_performance)
+        if self.prev_performance_real > self.best_ever_real:
             self.best_ever_real = self.prev_performance_real
 
         return self._get_state(), {
@@ -571,8 +641,9 @@ class LatticeDesignEnv(gym.Env):
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         self.current_step += 1
+        self.last_action = int(action)
         prev_perf = self.prev_performance
-        prev_best = self.best_performance  
+        prev_best = self.best_performance
 
         action_unavailable = not self._is_action_available(action)
         if action_unavailable:
@@ -651,11 +722,15 @@ class LatticeDesignEnv(gym.Env):
 
         if current_perf > self.best_performance:
             self.best_performance = current_perf
+
+
+        if current_perf_real > self.best_performance_real:
             self.best_performance_real = current_perf_real
             self.best_state_in_episode = self.lattice_state.clone()
 
         if current_perf > self.best_ever:
             self.best_ever = current_perf
+        if current_perf_real > self.best_ever_real:
             self.best_ever_real = current_perf_real
 
         self.prev_performance = current_perf

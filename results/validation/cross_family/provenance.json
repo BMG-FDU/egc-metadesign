@@ -1,0 +1,13 @@
+{
+  "checkpoint_sha256": "A456DD8E055FD6EDC0774141D45E58E5A4851C632762D78621D32DCA93E5C460",
+  "use_global_feat": false,
+  "device": "cpu",
+  "seed": 42,
+  "selection": "100 per family; sort sample IDs then sample without replacement using numpy default_rng(42), independently per family; no error-based selection",
+  "endpoint": "prediction at strain 0.5, not maximum of predicted curve",
+  "training": "None; frozen checkpoint, no refitting or family-specific correction",
+  "limitation": "Retrospective external-family evaluation of available complete FE results. Failed/incomplete FE curves excluded; no claim of unbiased coverage of failed simulations. Historical model and label consistency must be considered when interpreting transfer.",
+  "source_directory": "D:\\WORK\\20261016\\R2_3_OldGNN_CrossFamily_Test\\results",
+  "source_predictions_sha256": "2ddb316d3c13c81da4f1b3f2120f1334ce47ed7cf3cbb8fc5ca1bd0fd7778d93",
+  "computation": "Recalculate metrics from archived paired endpoint predictions; no predictor retraining or inference rerun"
+}

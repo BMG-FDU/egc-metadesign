@@ -1,0 +1,30 @@
+[
+  {
+    "source": "D:\\WORK\\20260620\\fig2d\\fig2d.py",
+    "source_sha256": "c231a02140c333eabaae511e65888ba618fb1de19ef080d61c8ef82727366662",
+    "packaged_file": "route_comparison\\route_algorithms.py",
+    "packaged_sha256": "599dde2e45b382a513ec71ea55a27e60ecdd4c638e5c23499d75b9c31d0231ea",
+    "operation": "Eight original functions extracted without algorithm changes"
+  },
+  {
+    "source": "D:\\WORK\\20260620\\fig2d\\graph\\pattern8_single_5x3_0.json",
+    "source_sha256": "74924cb53716d2ca52298eec119464084c0c3609a4bfbc29d2e4a8648bd9d30d",
+    "packaged_file": "route_comparison\\graph\\pattern8_single_5x3_0.json",
+    "packaged_sha256": "74924cb53716d2ca52298eec119464084c0c3609a4bfbc29d2e4a8648bd9d30d",
+    "operation": "Copied unchanged"
+  },
+  {
+    "source": "D:\\小论文\\ijms一修\\11_回稿编写与核查\\20261023_R1_11_实测时间插图\\process_turning_time.py",
+    "source_sha256": "5097d053088c8aee1066455eb58ac09a5f6ab0c9f03ac4be3e72653787b6bcb7",
+    "packaged_file": "printing_time\\process_turning_time.py",
+    "packaged_sha256": "50ffb614495dd0ddaf15e2f5a4fd362dd7a43066d5539efb2d47b310d1a5634a",
+    "operation": "Portable input/output paths; plotting and statistics retained; historical planning notes omitted"
+  },
+  {
+    "source": "D:\\WORK\\20260621\\fig2b\\转角时间记录.csv",
+    "source_sha256": "15709d1376a101d654a24a3d0967542a5ea39ac5dbfe7dc0b028c4fa0de07664",
+    "packaged_file": "printing_time\\data\\turning_time_replicates_raw.csv",
+    "packaged_sha256": "15709d1376a101d654a24a3d0967542a5ea39ac5dbfe7dc0b028c4fa0de07664",
+    "operation": "Copied unchanged"
+  }
+]

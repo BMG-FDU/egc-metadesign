@@ -1,0 +1,42 @@
+[
+  {
+    "path": "config/research_demo.json",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\config\\research_demo.json",
+    "sha256": "c680edd903d7daff1de6947b8c181352be4630bdf1209b4601f975b6096af22d"
+  },
+  {
+    "path": "outputs/euler_momentum_closed/euler_momentum_closed.gcode",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\outputs\\euler_momentum_closed\\euler_momentum_closed.gcode",
+    "sha256": "d2dd0146af8cbbe13a2f64c0f635377389c5394730b226f6f8d3dac50da7f986"
+  },
+  {
+    "path": "outputs/euler_momentum_closed/route_steps.csv",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\outputs\\euler_momentum_closed\\route_steps.csv",
+    "sha256": "b9f0f2d90b4baa58b9f3e492516d59ec6cd25103d4be691c706d27fea5ecac5f"
+  },
+  {
+    "path": "snippets/euler_momentum_closed_commands_excerpt.gcode",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\snippets\\euler_momentum_closed_commands_excerpt.gcode",
+    "sha256": "08872eb030a45b9a08582629ce2883b6dc64a740b9a6c37390caa0b876bac547"
+  },
+  {
+    "path": "outputs/direct_momentum_closed/direct_momentum_closed.gcode",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\outputs\\direct_momentum_closed\\direct_momentum_closed.gcode",
+    "sha256": "7329d37937dfc4711a57d455b67c58fa0b31ef609fc244ef13d97cf57ae61a74"
+  },
+  {
+    "path": "outputs/direct_momentum_closed/route_steps.csv",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\outputs\\direct_momentum_closed\\route_steps.csv",
+    "sha256": "bf5e83f1f16294b053ee3188e34c0091a3f980355ec03d3df4e7731db21b7d39"
+  },
+  {
+    "path": "snippets/direct_momentum_closed_commands_excerpt.gcode",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\snippets\\direct_momentum_closed_commands_excerpt.gcode",
+    "sha256": "92222f98c755839faf160597f6ead217c74cf5e7c1986539e1c9b0f19561c5f5"
+  },
+  {
+    "path": "export_gcode.py",
+    "source": "D:\\小论文\\ijms一修\\03_图表与数据\\G-code沉积命令\\src\\build_research_demo.py",
+    "operation": "Original format_xy/create_gcode functions retained; CSV-based portable entry added"
+  }
+]
