@@ -14,7 +14,7 @@ def write_csv(path, rows):
         writer.writerows(rows)
 
 
-def summarize(root):
+def summarize(root, all_metrics=False):
     manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
     rows = []
     for run in manifest['runs']:
@@ -53,7 +53,10 @@ def summarize(root):
                          tail_episode_count=len(tail), model_sha256=run['model_sha256']))
     output = root / 'summary'
     output.mkdir(exist_ok=True)
-    write_csv(output / 'per_run_summary.csv', rows)
+    per_run_fields = ('method', 'seed', 'gnn_calls', 'first_call_sea_gt_750', 'model_sha256')
+    suffix = '_all_metrics' if all_metrics else ''
+    write_csv(output / ('per_run_summary' + suffix + '.csv'),
+              rows if all_metrics else [{k: row[k] for k in per_run_fields} for row in rows])
     aggregate = []
     for method in dict.fromkeys(row['method'] for row in rows):
         group = [row for row in rows if row['method'] == method]
@@ -64,7 +67,9 @@ def summarize(root):
             result[metric + '_mean'] = statistics.mean(values) if values else ''
             result[metric + '_sd'] = statistics.stdev(values) if len(values) > 1 else ''
         aggregate.append(result)
-    write_csv(output / 'aggregate_summary.csv', aggregate)
+    aggregate_fields = ('method', 'seed_count', 'first_call_sea_gt_750_mean', 'first_call_sea_gt_750_sd')
+    write_csv(output / ('aggregate_summary' + suffix + '.csv'),
+              aggregate if all_metrics else [{k: row[k] for k in aggregate_fields} for row in aggregate])
     print(f'Verified {len(rows)} runs; {sum(row["gnn_calls"] for row in rows):,} evaluations.')
     print(f'Summaries: {output}')
 

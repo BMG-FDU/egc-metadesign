@@ -7,5 +7,5 @@
     ".git",
     "outputs"
   ],
-  "scope": "Local revision package; remote upload is performed separately."
+  "scope": "Code and data supporting the manuscript."
 }

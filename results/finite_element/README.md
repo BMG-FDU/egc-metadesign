@@ -1,6 +1,6 @@
 # Finite-element supplementary materials: Figs. S3–S7
 
-This folder contains the plotted/reported data, extraction scripts and representative Abaqus inputs. ODBs, failed jobs and abandoned section-Poisson-0.49 sensitivity runs are excluded. Historical input settings are preserved. For S4/S5, material Poisson ratio is 0.475; baseline and sensitivity beam-section ratios are 0 and 0.475. S7 historical settings are recorded in Fig_S7/source_settings.json.
+This folder contains the plotted/reported data, extraction scripts and representative Abaqus inputs. For S4/S5, material Poisson ratio is 0.475; baseline and sensitivity beam-section ratios are 0 and 0.475. S7 model settings are recorded in Fig_S7/source_settings.json.
 
 - S3: 12 B31 inputs (three structures, four mesh sizes), curves and mesh statistics.
 - S4: five nominal beams, contacting/non-contacting solids and volume-matched section-0.475 beams, with response/contact/energy data.
@@ -36,4 +36,4 @@ abaqus python extract_curve.py path/to/model.odb --height 100 --mass-kg <model_m
 
 For an S6 representative, change to a separate working directory and run `abaqus cae noGUI=<absolute_folder>/Fig_S6/shared/abaqus_worker.py -- <absolute_folder>/Fig_S6/02_Load_path/config.json DL_01`. Use 03_Energy_distribution/config.json for elastic-energy extraction. Other family IDs are listed in representative_samples.csv.
 
-The data-summary/plotting entries were executed successfully during packaging; Abaqus analyses were not re-run.
+

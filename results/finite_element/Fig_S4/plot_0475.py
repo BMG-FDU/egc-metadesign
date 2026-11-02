@@ -124,5 +124,5 @@ def s5():
 if __name__=='__main__':
  metrics=s4() if MODE=='S4' else s5()
  write('raw_curve_audit.csv',audit)
- (OUT/'初步核查报告.md').write_text('# '+MODE+'：0.475重画\n\n采用原始RF–U积分计算响应。\n\n图c表示单位质量拉伸加载功；work_curve_NRMSE与SEA_curve_NRMSE分别报告加载功和单位质量加载功曲线误差。\n\n'+json.dumps(metrics,ensure_ascii=False,indent=2),encoding='utf-8')
+ (OUT/'结果说明.md').write_text('# Fig. '+MODE+' 结果说明\n\n采用原始RF–U积分计算响应。\n\n图c表示单位质量拉伸加载功；work_curve_NRMSE与SEA_curve_NRMSE分别报告加载功和单位质量加载功曲线误差。\n\n'+json.dumps(metrics,ensure_ascii=False,indent=2),encoding='utf-8')
  print('Output:',OUT)

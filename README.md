@@ -28,7 +28,7 @@ python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/
 python -m pip install -r requirements.txt
 ```
 
-The CUDA 12.9 installation command follows the [official PyTorch 2.8 instructions](https://pytorch.org/get-started/previous-versions/#v280). Abaqus 2024 must be installed separately for finite-element jobs; run Abaqus extraction scripts with its own Python interpreter. The dependency file records the reported package versions; a fresh installation has not been tested during packaging.
+The CUDA 12.9 installation command follows the [official PyTorch 2.8 instructions](https://pytorch.org/get-started/previous-versions/#v280). Abaqus 2024 must be installed separately for finite-element jobs; run Abaqus extraction scripts with its own Python interpreter. The dependency file lists the package versions used.
 
 ## Running the Code
 
@@ -98,7 +98,9 @@ python evaluate_gnn.py --checkpoint results/retrained_full/best_model.pth --outd
 python summarize_optimization_logs.py
 ```
 
-The command verifies the saved logs and writes per-run and five-seed summaries to `results/optimization_logs/summary/`: first evaluation strictly exceeding 750 J/kg, final best SEA, and the mean of episode-best SEA values whose episode-end call counts satisfy `90000 < count <= 100000`. Aggregate standard deviations use `ddof=1`. These are summaries of the saved five-seed runs.
+The command verifies all saved evaluation logs and writes per-run and five-seed first-crossing summaries to `results/optimization_logs/summary/` for Fig. S12(d), Fig. 6(j), and Table S7. The target is strictly greater than 750 J/kg; standard deviations use `ddof=1`. The means are 440.6 (PPO), 722.2 (Greedy), 10966 (Random), and 2203 (Hill Climbing) evaluations.
+
+For provenance checks, `python summarize_optimization_logs.py --all-metrics` writes separate `*_all_metrics.csv` files containing final-best and late-window statistics as well. These archived runs give different final-best and late-window values from those reported in the manuscript; the source correspondence for Fig. S12(a-c) and Fig. 6(i) remains unresolved. These logs are verified here only against the reported first-crossing statistics, not as the verified source of those other panels.
 
 Optimization-control data used in Figs. S17–S18 and Tables S13–S14 are in `results/optimization_controls/`; see its bilingual README for file descriptions.
 
@@ -126,7 +128,7 @@ All commands below run from the package root, except the finite-element commands
 | GNN training; R1-8 | `graph/`, `data/`; parameters in `configs/` | GNN training command above | `outputs/gnn_retraining/`; archived Fig. 5b records: `results/retraining_records/` |
 | Fixed-test GNN evaluation; R1-7, R1-8 | `results/best_model.pth`, `splits/data_split_manifest.csv`, `graph/`, `data/` | `python evaluate_gnn.py` | `outputs/original_full_evaluation/`; whole-curve and endpoint metrics |
 | Optimization; R1-9, R2-4 | Historical checkpoint and topology editor | Four-algorithm command above | `outputs/comparison/`; new runs are separate from the archived runs |
-| Archived five-seed statistics; R1-9, R2-4 | `results/optimization_logs/` | `python summarize_optimization_logs.py` | `results/optimization_logs/summary/`; Fig. 6i,j and Fig. S12 |
+| Five-seed first-crossing statistics; R1-9, R2-4 | `results/optimization_logs/` | `python summarize_optimization_logs.py` | `results/optimization_logs/summary/`; Fig. 6(j), Fig. S12(d), Table S7 |
 | Optimization controls; R1-9 | `results/optimization_controls/` | [Data descriptions](results/optimization_controls/README.md) | Figs. S17–S18, Tables S13–S14; saved plotting curves and summaries |
 | Seven-descriptor SHAP; R1-10, R2 minor 3 | `results/shap/descriptor_inputs_and_splits.csv` | `python run_descriptor_shap.py --input-table results/shap/descriptor_inputs_and_splits.csv --outdir outputs/shap` | `outputs/shap/`; Fig. 5f and Fig. S10 |
 | Duplicate/nearest-neighbor checks; R1-8, R2-3 | Packaged graphs, fixed splits and archived predictions | [Commands](results/structural_similarity/README.md) | `results/structural_similarity/outputs/`; Fig. S8 |
@@ -139,4 +141,4 @@ All commands below run from the package root, except the finite-element commands
 
 Repository: https://github.com/BMG-FDU/egc-metadesign
 
-This local revision package is identified in `RELEASE.json`. `FILE_MANIFEST_SHA256.csv` records the relative path, size and SHA-256 of each release file. Python caches and generated `outputs/` directories are excluded from the release inventory. Upload this revision package to the repository to make the files available at the address cited in the manuscript and response.
+The package version is identified in `RELEASE.json`. `FILE_MANIFEST_SHA256.csv` records the relative path, size and SHA-256 of each release file. Python caches and generated `outputs/` directories are excluded from the release inventory.

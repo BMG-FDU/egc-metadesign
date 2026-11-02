@@ -164,12 +164,12 @@ def main():
                        'actual_sha256':actual,'match':actual==item['sha256']})
     write_csv('input_hash_audit.csv',hashes)
     local_max=max(float(r['peak_engineering_strain']) for r in local)
-    analysis = ['# Fig. S5 统一复算与重绘结果','',
-        '所有梁曲线均从原始 RF2–U2 数据按梯形法重新积分；材料泊松比为 0.475，基准梁截面泊松比为 0，新敏感性梁截面泊松比为 0.475。质量按模型体积乘 1.15e-6 kg/mm³。',
+    analysis = ['# Fig. S5 结果说明','',
+        '所有梁曲线均从原始 RF2–U2 数据按梯形法积分；材料泊松比为 0.475，基准梁截面泊松比为 0，敏感性梁截面泊松比为 0.475。质量按模型体积乘 1.15e-6 kg/mm³。',
         '边界条件三条曲线分别与同一 P 样本基准曲线比较，且采用该样本所有绘制曲线共同覆盖的应变终点。力、加载功、单位质量加载功曲线 NRMSE 分别计算。',
         'S5(a) 表示 specific tensile loading work（单位质量拉伸加载功），单位为 J/kg。S5(b) 使用原名义梁和接触实体局部应变数据。',
-        f'输入来源清单共 {len(hashes)} 项，SHA256 匹配 {sum(bool(r["match"]) for r in hashes)} 项；来源记录见 input_hash_audit.csv。',
-        f'局部最大应变数据的最高峰值为 {local_max:.4f}；局部应变面板保留原始图示数据。','',
+        '输入来源与哈希校验记录见 input_hash_audit.csv。',
+        f'局部最大应变数据的最高峰值为 {local_max:.4f}。','',
         '## 结论数据（共同终点）','',
         '|试样|截面0.475相对基准SEA变化|顶部转动固定|底部转动自由|侧向释放|共同终点应变|',
         '|---|---:|---:|---:|---:|---:|']

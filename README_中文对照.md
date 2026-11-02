@@ -30,7 +30,7 @@ python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/
 python -m pip install -r requirements.txt
 ```
 
-CUDA 12.9安装命令参照[PyTorch 2.8官方说明](https://pytorch.org/get-started/previous-versions/#v280)。有限元任务另需安装Abaqus 2024；Abaqus结果提取脚本使用其自带Python运行。依赖文件按本次提供的实际版本填写，本次整理未重新安装环境测试。
+CUDA 12.9安装命令参照[PyTorch 2.8官方说明](https://pytorch.org/get-started/previous-versions/#v280)。有限元任务另需安装Abaqus 2024；Abaqus结果提取脚本使用其自带Python运行。依赖文件列出所使用的软件包版本。
 
 ## 运行代码
 
@@ -100,7 +100,9 @@ python evaluate_gnn.py --checkpoint results/retrained_full/best_model.pth --outd
 python summarize_optimization_logs.py
 ```
 
-脚本校验已有日志，在`results/optimization_logs/summary/`输出逐次运行及五种子汇总：首次严格超过750 J/kg的评价次数、最终最优SEA，以及回合结束调用数满足`90000 < count <= 100000`的回合最优SEA均值。跨种子标准差采用`ddof=1`。汇总对象为这里保存的五种子运行。
+脚本校验全部逐次评价日志，在`results/optimization_logs/summary/`输出逐次运行及五种子的首次严格超过750 J/kg的评价次数，对应Fig. S12(d)、Fig. 6(j)和Table S7。标准差采用`ddof=1`。均值为PPO 440.6、Greedy 722.2、Random 10966、Hill Climbing 2203次。
+
+追溯完整统计时，运行`python summarize_optimization_logs.py --all-metrics`，另行生成包含最终最佳值和末段统计的`*_all_metrics.csv`。这些日志的最终最佳值和末段统计与正文所报数值存在差异，Fig. S12(a-c)和Fig. 6(i)的数据来源对应关系尚未解决。本处仅确认它们与所报首次达标次数一致，不将其认定为其他子图已核验的源数据。
 
 SI中的Figs. S17–S18及Tables S13–S14采用的优化对照数据位于`results/optimization_controls/`，文件说明见该目录的中英对照README。
 
@@ -128,7 +130,7 @@ Figs. S3–S7有限元补充材料与运行方式：[说明](results/finite_elem
 | GNN训练；R1-8 | `graph/`、`data/`及`configs/`参数 | 上方GNN训练命令 | `outputs/gnn_retraining/`；Fig. 5b已有记录：`results/retraining_records/` |
 | 固定测试集评估；R1-7、R1-8 | `results/best_model.pth`、`splits/data_split_manifest.csv`、`graph/`、`data/` | `python evaluate_gnn.py` | `outputs/original_full_evaluation/`；全曲线与端点指标 |
 | 优化运行；R1-9、R2-4 | 历史预测器及拓扑编辑器 | 上方四算法运行命令 | `outputs/comparison/`；新运行与已有记录分开保存 |
-| 已有五种子统计；R1-9、R2-4 | `results/optimization_logs/` | `python summarize_optimization_logs.py` | `results/optimization_logs/summary/`；Fig. 6i,j及Fig. S12 |
+| 五种子首次达标统计；R1-9、R2-4 | `results/optimization_logs/` | `python summarize_optimization_logs.py` | `results/optimization_logs/summary/`；Fig. 6(j)、Fig. S12(d)、Table S7 |
 | 优化对照；R1-9 | `results/optimization_controls/` | [数据说明](results/optimization_controls/README.md) | Figs. S17–S18、Tables S13–S14；已保存绘图曲线与汇总 |
 | 七描述符SHAP；R1-10、R2次要3 | `results/shap/descriptor_inputs_and_splits.csv` | `python run_descriptor_shap.py --input-table results/shap/descriptor_inputs_and_splits.csv --outdir outputs/shap` | `outputs/shap/`；Fig. 5f及Fig. S10 |
 | 去重与最近邻分析；R1-8、R2-3 | 包内结构、固定划分及已保存预测 | [运行命令](results/structural_similarity/README.md) | `results/structural_similarity/outputs/`；Fig. S8 |
@@ -141,4 +143,4 @@ Figs. S3–S7有限元补充材料与运行方式：[说明](results/finite_elem
 
 仓库地址：https://github.com/BMG-FDU/egc-metadesign
 
-本地修订包版本见`RELEASE.json`；`FILE_MANIFEST_SHA256.csv`记录发布文件的相对路径、大小及SHA-256。发布清单不包含Python缓存及运行生成的`outputs/`目录。将本次修订包上传至该仓库后，正文和回稿中引用的地址才能取得这些文件。
+代码包版本见`RELEASE.json`；`FILE_MANIFEST_SHA256.csv`记录发布文件的相对路径、大小及SHA-256。发布清单不包含Python缓存及运行生成的`outputs/`目录。
